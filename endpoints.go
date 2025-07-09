@@ -15,7 +15,7 @@ var (
 
 // Roblox API Endpoints
 var (
-	EndpointRoblox      = "https://roblox.com"
+	EndpointRoblox = "https://roblox.com"
 
 	// Cloud APIs
 	EndpointCloud       = "https://apis.roblox.com/cloud/v"

@@ -9,8 +9,8 @@
 package robloxgo
 
 import (
-	"net/http"
 	"errors"
+	"net/http"
 )
 
 // VERSION of DiscordGo. Follows Semantic Versioning. (https://semver.org)
@@ -37,7 +37,7 @@ func Create(apikey string) (*Client, error) {
 }
 
 type Client struct {
-	client  *http.Client
+	client *http.Client
 }
 
 type APIVerificationStruct struct {
