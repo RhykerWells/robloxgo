@@ -20,6 +20,10 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{matrix.goVersion}}
+      - name: version go mod
+        run: |
+          go_minor=$(echo ${{matrix.goVersion}} | cut -d '.' -f1,2)
+          go mod edit -go=$go_minor
 
       - name: Format & vet
         run: |
