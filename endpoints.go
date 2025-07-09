@@ -22,4 +22,5 @@ var (
 	// Cloud APIs
 	EndpointCloud       = "https://apis.roblox.com/cloud/v"
 	EndpointCloudAPI    = EndpointCloud + CloudAPIVersion + "/"
+	EndPointCloudUsers  = EndpointCloudAPI + "users/"
 )
