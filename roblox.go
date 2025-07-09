@@ -13,8 +13,8 @@ import (
 	"net/http"
 )
 
-// VERSION of DiscordGo. Follows Semantic Versioning. (https://semver.org)
-const VERSION = "0.2.0"
+// VERSION of Roblox. Follows Semantic Versioning. (https://semver.org)
+const VERSION = "0.2.1"
 
 // Create initialises and returns a new Roblox client with the provided API key.
 // The client automatically attaches the API key to all outgoing requests via the "X-API-KEY" header
