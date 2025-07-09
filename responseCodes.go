@@ -1,12 +1,11 @@
 // Robloxgo - Roblox bindings for Go
 // Available at https://github.com/RhykerWells/robloxgo
-
+//
 // Copyright 2025 Rhyker Wells <a.rhykerw@gmail.com>.  All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
-
+//
 // Package robloxgo provides Roblox binding for Go
-
 package robloxgo
 
 import (
