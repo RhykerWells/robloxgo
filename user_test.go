@@ -43,7 +43,7 @@ func TestGetUser_PopulatedUserID(t *testing.T) {
 	apiKey := os.Getenv("RG_APIKEY")
 	client, _ := Create(apiKey)
 
-	user, err := client.GetUserByID("520198334")
+	user, err := client.GetUserByID("369780411")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
