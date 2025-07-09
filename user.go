@@ -31,6 +31,20 @@ type User struct {
 
 	// The user's account creation date.
 	CreatedAt string `json:"createTime"`
+
+	// The client used to connect to Roblox
+	Client *Client
+}
+
+
+// userUser creates a new User instance associated with the given Client.
+//
+// This function is intended for internal use to ensure that every user
+// has a reference to the Client, enable methods on the User object to make api calls.
+func newUser(client *Client) *User {
+	return &User{
+		Client: client,
+	}
 }
 
 // GetUserByID retrieves a Roblox user from the Open Cloud API by their user ID.
@@ -43,7 +57,7 @@ func (c *Client) GetUserByID(userID string) (*User, error) {
 		return nil, err
 	}
 
-	user := new(User)
+	user := newUser(c)
 	err = json.NewDecoder(response.Body).Decode(user)
 	if err != nil {
 		return nil, err
@@ -89,7 +103,7 @@ func (c *Client) GetUserByUsername(username string) (*User, error) {
 		return nil, err
 	}
 
-	user := new(User)
+	user := newUser(c)
 	err = json.NewDecoder(response.Body).Decode(user)
 	if err != nil {
 		return nil, err
