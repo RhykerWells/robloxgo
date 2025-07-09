@@ -9,15 +9,42 @@
 package robloxgo
 
 import (
+	"bytes"
+	"encoding/json"
 	"net/http"
 )
 
 // get is an internal method that makes a GET request to the specified URL
 
-// If the response status code is not 200 (OK/Successful), it 
+// If the response status code is not 200 (OK/Successful), it
 // returns a custom error describing the HTTP status code
 func (c *Client) get(methodURL string) (*http.Response, error) {
 	req, err := http.NewRequest(http.MethodGet, methodURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode != ResponseOK.Code {
+		return nil, getFullHttpError(resp.StatusCode)
+	}
+
+	return resp, nil
+}
+
+// post is an internal method that makes a POST request to the specified URL
+
+// If the response status code is not 200 (OK/Successful), it 
+// returns a custom error describing the HTTP status code
+func (c *Client) post(methodURL string, body any) (*http.Response, error) {
+	var requestBody bytes.Buffer
+    json.NewEncoder(&requestBody).Encode(body)
+	req, err := http.NewRequest(http.MethodPost, methodURL, &requestBody)
 	if err != nil {
 		return nil, err
 	}
