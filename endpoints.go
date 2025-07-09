@@ -14,6 +14,8 @@ var (
 )
 
 // Roblox API Endpoints
+// These are used internally to build request paths for the
+// various functions that this package provides
 var (
 	EndpointRoblox = "https://roblox.com"
 
