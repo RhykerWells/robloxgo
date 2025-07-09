@@ -52,7 +52,6 @@ func TestGetUser_PopulatedUserID(t *testing.T) {
 	}
 }
 
-
 func TestGetUser_EmptyUsername(t *testing.T) {
 	apiKey := os.Getenv("RG_APIKEY")
 	client, _ := Create(apiKey)
