@@ -10,12 +10,13 @@ package robloxgo
 
 import (
 	"encoding/json"
+	"errors"
 )
 
 // A User stores all data for an individual Roblox user.
 type User struct {
 	// The ID of the user.
-	ID string `json:"id"`
+	ID json.Number `json:"id"`
 
 	// The user's username.
 	Username string `json:"name"`
@@ -39,6 +40,43 @@ type User struct {
 // be decoded, or if the user does not exist.
 func (c *Client) GetUserByID(userID string) (*User, error) {
 	response, err := c.get(EndPointCloudUsers + userID)
+	if err != nil {
+		return nil, err
+	}
+
+	user := new(User)
+	err = json.NewDecoder(response.Body).Decode(user)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (c *Client) GetUserByUsername(username string) (*User, error) {
+	if username == "" {
+		return nil, errors.New("no username")
+	}
+
+	requestBody := map[string]interface{}{"usernames": []string{username}, "excludeBannedUsers": true}
+	response, err := c.post(EndpointLegacyGetUsers, requestBody)
+	if err != nil {
+		return nil, err
+	}
+
+	var Response struct {Data []User `json:"data"`}
+	err = json.NewDecoder(response.Body).Decode(&Response)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(Response.Data) == 0 {
+		return nil, errors.New("invalid username provided")
+	}
+
+	legacyUser := &Response.Data[0]
+
+	response, err = c.get(EndPointCloudUsers + legacyUser.ID.String())
 	if err != nil {
 		return nil, err
 	}
