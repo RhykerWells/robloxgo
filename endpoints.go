@@ -23,4 +23,8 @@ var (
 	EndpointCloud       = "https://apis.roblox.com/cloud/v"
 	EndpointCloudAPI    = EndpointCloud + CloudAPIVersion + "/"
 	EndPointCloudUsers  = EndpointCloudAPI + "users/"
+
+	// Legacy APIs
+	EndpointLegacyUsers = "https://users.roblox.com"
+	EndpointLegacyGetUsers = EndpointLegacyUsers + "/v1/usernames/users"
 )
