@@ -53,6 +53,13 @@ func (c *Client) GetUserByID(userID string) (*User, error) {
 	return user, nil
 }
 
+// GetUserByUsername retrieves a Roblox user from the Legacy Roblox API by their user Username.
+//
+// Returns an error if the HTTP request fails, if the response body cannot
+// be decoded, or if the user does not exist.
+//
+// This method may be deprecated if Roblox removes the 
+// legacy https://users.roblox.com/v1/usernames/users endpoint
 func (c *Client) GetUserByUsername(username string) (*User, error) {
 	if username == "" {
 		return nil, errors.New("no username")
