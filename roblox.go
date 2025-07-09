@@ -16,7 +16,10 @@ import (
 // VERSION of DiscordGo. Follows Semantic Versioning. (https://semver.org)
 const VERSION = "0.1.0"
 
-// Create creates a new Roblox client with the provided API key.
+// Create initialises and returns a new Roblox client with the provided API key.
+// The client automatically attaches the API key to all outgoing requests via the "X-API-KEY" header
+//
+// Returns an error if the API key is empty
 func Create(apikey string) (*Client, error) {
 	if apikey == "" {
 		return nil, errors.New("no api key provided")
@@ -36,6 +39,8 @@ func Create(apikey string) (*Client, error) {
 	return client, nil
 }
 
+// Client represents the created http client and will serve as a base for
+// all help functions to be accessed from
 type Client struct {
 	client *http.Client
 }

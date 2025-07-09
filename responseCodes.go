@@ -19,6 +19,7 @@ type httpResponse struct {
 	Error string
 }
 
+// See https://create.roblox.com/docs/cloud/reference/errors
 var (
 	ResponseOK                 = httpResponse{Code: 200, Error: "response ok"}
 	ResponseInvalid            = httpResponse{Code: 400, Error: "invalid argument passed"}
@@ -43,6 +44,7 @@ var httpResponses = map[int]httpResponse{
 	503: ResponseServiceUnavailable,
 }
 
+// getFullHttpError returns a formatted error for the given response HTTP status code.
 func getFullHttpError(errorCode int) error {
 	httpResponse := httpResponses[errorCode]
 
