@@ -32,9 +32,6 @@ type Group struct {
 	// The group's member count.
 	MemberCount json.Number `json:"memberCount"`
 
-	// A slice of Roblox userIDs currently present in the Group.
-	Members []string
-
 	// The group's entry state.
 	// Returns true if public, false if set to request only
 	PublicEntry bool `json:"publicEntryAllowed"`
@@ -47,6 +44,12 @@ type Group struct {
 
 	// The client used to connect to Roblox.
 	Client *Client
+}
+
+type GroupMember struct {
+	ID string
+	Username string
+	LegacyGroupRole LegacyGroupRole
 }
 
 type LegacyGroupRole struct {
@@ -204,7 +207,7 @@ func (g *Group) GetGroupIcon(large bool, isCircular bool) (string, error) {
 // the full member slice.
 //
 // TODO: Implement a Client/Session state and repoll this at set intervals instead?
-func (g *Group) GetMembers() (members []string, err error) {
+func (g *Group) GetMembers() (members []GroupMember, err error) {
 	methodURL := EndpointCloudGroups+g.ID.String() + "/memberships"
 	var pageToken string
 
@@ -237,7 +240,20 @@ func (g *Group) GetMembers() (members []string, err error) {
         }
 
 		for _, member := range membershipResponse.GroupMemberShip {
-			members = append(members, strings.TrimPrefix(member.User, "users/"))
+			userID := strings.TrimPrefix(member.User, "users/")
+
+			user, err := g.Client.GetUserByID(userID)
+			if err != nil {
+				continue
+			}
+
+			role, _ := g.GetUsersLegacyRole(userID)
+
+			members = append(members, GroupMember{
+				ID: userID,
+				Username: user.Username,
+				LegacyGroupRole: *role,
+			})
 		}
 
 		if membershipResponse.NextPage == "" {
