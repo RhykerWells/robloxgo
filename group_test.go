@@ -136,7 +136,7 @@ func TestGetGroupRoles(t *testing.T) {
 	apiKey := os.Getenv("RG_APIKEY")
 	client, _ := Create(apiKey)
 
-	group, err := client.GetGroupByID("36098297")
+	group, err := client.GetGroupByID("7")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -145,7 +145,6 @@ func TestGetGroupRoles(t *testing.T) {
 	}
 
 	roles, err := group.GetRoles()
-	t.Log(roles)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -154,7 +153,7 @@ func TestGetGroupRoles(t *testing.T) {
 	}
 }
 
-func TestGetUsersLegacyRole(t *testing.T) {
+func TestGetUsersRole(t *testing.T) {
 	apiKey := os.Getenv("RG_APIKEY")
 	client, _ := Create(apiKey)
 
@@ -166,7 +165,7 @@ func TestGetUsersLegacyRole(t *testing.T) {
 		t.Fatal("expected group, got nil")
 	}
 
-	role, err := group.GetUsersLegacyRole("21557")
+	role, err := group.GetUserRole("21557")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

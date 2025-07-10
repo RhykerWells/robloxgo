@@ -67,30 +67,16 @@ type GroupMember struct {
 	Username string
 
 	// The member's legacy group role.
-	LegacyGroupRole LegacyGroupRole
+	GroupRole GroupRole
 }
 
+// GroupRole stores all data for a role within a Roblox group,
 type GroupRole struct {
 	// The ID of the role.
 	ID json.Number `json:"id"`
 
 	// The role's name.
 	Name string `json:"displayName"`
-
-	// The role's description.
-	Description string `json:"description"`
-
-	// The role's heirarchial rank.
-	Rank json.Number `json:"rank"`
-}
-
-// LegacyGroupRole stores all data for the legacy role type within a Roblox group,
-type LegacyGroupRole struct {
-	// The ID of the role.
-	ID json.Number `json:"id"`
-
-	// The role's name.
-	Name string `json:"name"`
 
 	// The role's heirarchial rank.
 	Rank json.Number `json:"rank"`
@@ -324,12 +310,12 @@ func (g *Group) GetMembers() (members []GroupMember, err error) {
 				continue
 			}
 
-			role, _ := g.GetUsersLegacyRole(userID)
+			role, _ := g.GetUserRole(userID)
 
 			members = append(members, GroupMember{
 				ID:              userID,
 				Username:        user.Username,
-				LegacyGroupRole: *role,
+				GroupRole:		 *role,
 			})
 		}
 
@@ -383,9 +369,7 @@ func (g *Group) GetRoles() (roles []GroupRole, err error) {
 
 		var rolesResponse struct {
 			NextPage        string `json:"nextPageToken"`
-			GroupRoles []struct {
-				ID string `json:"id"`
-			} `json:"groupRoles"`
+			GroupRoles []GroupRole `json:"groupRoles"`
 		}
 
 		err = json.NewDecoder(resp.Body).Decode(&rolesResponse)
@@ -395,7 +379,7 @@ func (g *Group) GetRoles() (roles []GroupRole, err error) {
 		}
 
 		for _, role := range rolesResponse.GroupRoles {
-			groupRole, err := g.GetRole(role.ID)
+			groupRole, err := g.GetRole(role.ID.String())
 			if err != nil {
 				continue
 			}
@@ -435,17 +419,17 @@ func (g *Group) GetRole(roleID string) (role *GroupRole, err error) {
 	return role, nil
 }
 
-// GetUsersLegacyRole retrieves the users (legacy) group role from the Legacy Roblox API.
+// GetUserRole retrieves the users group role from both the Legacy Roblox API & Open Cloud API.
 //
 // Returns an error if the HTTP request fails, or if the response body cannot
 // be decoded.
-func (g *Group) GetUsersLegacyRole(userID string) (*LegacyGroupRole, error) {
+func (g *Group) GetUserRole(userID string) (*GroupRole, error) {
 	user, err := g.Client.GetUserByID(userID)
 	if err != nil {
 		return nil, err
 	}
 
-	methodURL := EndpointLegacyGroups + "/v1/users/" + user.ID.String() + "/groups/roles"
+	methodURL := EndpointLegacyGroups + "/v2/users/" + user.ID.String() + "/groups/roles"
 	resp, err := g.Client.get(methodURL, nil, nil)
 	if err != nil {
 		return nil, err
@@ -456,7 +440,7 @@ func (g *Group) GetUsersLegacyRole(userID string) (*LegacyGroupRole, error) {
 			Group struct {
 				ID json.Number `json:"id"`
 			} `json:"group"`
-			Role LegacyGroupRole `json:"role"`
+			Role GroupRole `json:"role"`
 		} `json:"data"`
 	}
 	err = json.NewDecoder(resp.Body).Decode(&groupData)
@@ -464,11 +448,15 @@ func (g *Group) GetUsersLegacyRole(userID string) (*LegacyGroupRole, error) {
 		return nil, err
 	}
 
-	for _, group := range groupData.Data {
-		if group.Group.ID.String() != g.ID.String() {
+	for _, groupData := range groupData.Data {
+		if groupData.Group.ID.String() != g.ID.String() {
 			continue
 		}
-		return &group.Role, nil
+		groupRole, err := g.GetRole(groupData.Role.ID.String())
+		if err != nil {
+			return nil, err
+		}
+		return groupRole, nil
 	}
 
 	return nil, errors.New("user has no role")
