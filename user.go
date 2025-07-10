@@ -78,7 +78,7 @@ func (c *Client) GetUserByUsername(username string) (*User, error) {
 	}
 
 	requestBody := map[string]interface{}{"usernames": []string{username}, "excludeBannedUsers": true}
-	response, err := c.post(EndpointLegacyGetUsers, requestBody)
+	response, err := c.post(EndpointLegacyGetUsers, requestBody, nil, nil)
 	if err != nil {
 		return nil, err
 	}

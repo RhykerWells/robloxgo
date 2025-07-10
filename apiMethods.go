@@ -51,12 +51,23 @@ func (c *Client) get(methodURL string, headers []httpHeader, queryParams []query
 //
 // If the response status code is not 200 (OK/Successful), it
 // returns a custom error describing the HTTP status code
-func (c *Client) post(methodURL string, body any) (*http.Response, error) {
+func (c *Client) post(methodURL string, body any, headers []httpHeader, queryParams []queryParam) (*http.Response, error) {
 	var requestBody bytes.Buffer
 	json.NewEncoder(&requestBody).Encode(body)
-	req, err := http.NewRequest(http.MethodPost, methodURL, &requestBody)
+
+	parsedURL, _ := url.Parse(methodURL)
+	q := parsedURL.Query()
+	for _, param := range queryParams {
+		q.Set(param.Key, param.Value)
+	}
+	parsedURL.RawQuery = q.Encode()
+
+	req, err := http.NewRequest(http.MethodPost, parsedURL.String(), &requestBody)
 	if err != nil {
 		return nil, err
+	}
+	for _, header := range headers {
+		req.Header.Set(header.Key, header.Value)
 	}
 	req.Header.Set("Content-Type", "application/json")
 
