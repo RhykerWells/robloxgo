@@ -462,6 +462,23 @@ func (g *Group) GetUserRole(userID string) (*GroupRole, error) {
 	return nil, errors.New("user has no role")
 }
 
+// RemoveUser removes a given user from the group using the legacy Roblox API
+//
+// Returns an error if the HTTP request fails, or if the response body cannot
+// be decoded.
+//
+// This method may be deprecated if Roblox removes the
+// legacy https://groups.roblox.com/v1/groups/{groupID}/users/{memberID} endpoint
+func (g *Group) RemoveUser(userID string) (bool, error) {
+	if userID == "" {
+		return false, errors.New("no user id")
+	}
+
+	ok, err := g.Client.delete(EndpointLegacyGroups+g.ID.String()+"/users/"+userID, nil)
+
+	return ok, err
+}
+
 // GetGroupIcon retrieves a Roblox group's thumbnail URl from the legacy Roblox API.
 //
 // Returns an error if the HTTP request fails, or if the response body cannot
