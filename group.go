@@ -10,6 +10,7 @@ package robloxgo
 import (
 	"encoding/json"
 	"errors"
+	"strconv"
 )
 
 // A Group stores all data for an individual Roblox group.
@@ -123,4 +124,52 @@ func (c *Client) GetGroupByGroupname(groupname string) (*Group, error) {
 	group.Groupname = legacyGroup.Name
 
 	return group, nil
+}
+
+// GetGroupIcon retrieves a Roblox group's thumbnail URl from the legacy Roblox API.
+//
+// Returns an error if the HTTP request fails, or if the response body cannot
+// be decoded.
+//
+// This method may be deprecated if Roblox removes the
+// legacy https://thumbnails.roblox.com/v1/groups/icons endpoint
+func (g *Group) GetGroupIcon(large bool, isCircular bool) (string, error) {
+	size := "150x150"
+	if large {
+		size = "420x420"
+	}
+	querySet := []queryParam{
+		{
+			Key:   "groupIds",
+			Value: g.ID.String(),
+		},
+		{
+			Key:   "format",
+			Value: "Png",
+		},
+		{
+			Key:   "size",
+			Value: size,
+		},
+		{
+			Key:   "isCircular",
+			Value: strconv.FormatBool(isCircular),
+		},
+	}
+	response, err := g.Client.get(EndpointLegacyGetGroupIcon, nil, querySet)
+	if err != nil {
+		return "", err
+	}
+
+	var thumbnailResponse struct {
+		Data []struct {
+			ImageURL string `json:"imageUrl"`
+		} `json:"data"`
+	}
+	err = json.NewDecoder(response.Body).Decode(&thumbnailResponse)
+	if err != nil {
+		return "", err
+	}
+
+	return thumbnailResponse.Data[0].ImageURL, nil
 }
