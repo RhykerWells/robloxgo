@@ -50,3 +50,42 @@ func TestGetGroup_PopulatedGroupID(t *testing.T) {
 		t.Fatal("expected group, got nil")
 	}
 }
+
+func TestGetGroup_EmptyGroupname(t *testing.T) {
+	apiKey := os.Getenv("RG_APIKEY")
+	client, _ := Create(apiKey)
+
+	group, err := client.GetGroupByGroupname("")
+	if err == nil {
+		t.Fatal("expected error for empty groupname, got nil")
+	}
+	if group != nil {
+		t.Fatalf("expected nil group, got %v", group)
+	}
+}
+
+func TestGetGroup_InvalidGroupname(t *testing.T) {
+	apiKey := os.Getenv("RG_APIKEY")
+	client, _ := Create(apiKey)
+
+	group, err := client.GetGroupByGroupname("xxx")
+	if err == nil {
+		t.Fatal("expected error for invalid groupname, got nil")
+	}
+	if group != nil {
+		t.Fatalf("expected nil group, got %v", group)
+	}
+}
+
+func TestGetGroup_PopulatedGroupname(t *testing.T) {
+	apiKey := os.Getenv("RG_APIKEY")
+	client, _ := Create(apiKey)
+
+	group, err := client.GetGroupByGroupname("Roblox")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if group == nil {
+		t.Fatal("expected group, got nil")
+	}
+}

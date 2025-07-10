@@ -9,6 +9,7 @@ package robloxgo
 
 import (
 	"encoding/json"
+	"errors"
 )
 
 // A Group stores all data for an individual Roblox group.
@@ -67,6 +68,59 @@ func (c *Client) GetGroupByID(groupID string) (*Group, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	return group, nil
+}
+
+// GetGroupByGroupname retrieves a Roblox group from the Legacy Roblox API by their group Groupname (case sensitive).
+//
+// Returns an error if the HTTP request fails, if the response body cannot
+// be decoded, or if the group does not exist.
+//
+// This method may be deprecated if Roblox removes the
+// legacy https://groups.roblox.com/v1/groups/search/lookup endpoint
+func (c *Client) GetGroupByGroupname(groupname string) (*Group, error) {
+	if groupname == "" {
+		return nil, errors.New("no groupname")
+	}
+
+	groupHeader := queryParam{
+		Key:   "groupName",
+		Value: groupname,
+	}
+	response, err := c.get(EndpointLegacyGetGroups, nil, []queryParam{groupHeader})
+	if err != nil {
+		return nil, err
+	}
+
+	var legacyResponse struct {
+		Data []struct {
+			ID   json.Number `json:"id"`
+			Name string      `json:"name"`
+		} `json:"data"`
+	}
+	err = json.NewDecoder(response.Body).Decode(&legacyResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(legacyResponse.Data) == 0 || legacyResponse.Data[0].Name != groupname {
+		return nil, errors.New("invalid groupname provided")
+	}
+
+	legacyGroup := &legacyResponse.Data[0]
+
+	response, err = c.get(EndpointCloudGroups+legacyGroup.ID.String(), nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	group := newGroup(c)
+	err = json.NewDecoder(response.Body).Decode(group)
+	if err != nil {
+		return nil, err
+	}
+	group.Groupname = legacyGroup.Name
 
 	return group, nil
 }
