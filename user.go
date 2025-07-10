@@ -51,7 +51,7 @@ func newUser(client *Client) *User {
 // Returns an error if the HTTP request fails, if the response body cannot
 // be decoded, or if the user does not exist.
 func (c *Client) GetUserByID(userID string) (*User, error) {
-	response, err := c.get(EndPointCloudUsers + userID, nil, nil)
+	response, err := c.get(EndPointCloudUsers+userID, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +97,7 @@ func (c *Client) GetUserByUsername(username string) (*User, error) {
 
 	legacyUser := &Response.Data[0]
 
-	response, err = c.get(EndPointCloudUsers + legacyUser.ID.String(), nil, nil)
+	response, err = c.get(EndPointCloudUsers+legacyUser.ID.String(), nil, nil)
 	if err != nil {
 		return nil, err
 	}

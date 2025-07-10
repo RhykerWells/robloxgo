@@ -314,9 +314,9 @@ func (g *Group) GetMembers() (members []GroupMember, err error) {
 			role, _ := g.GetUserRole(userID)
 
 			members = append(members, GroupMember{
-				ID:              userID,
-				Username:        user.Username,
-				GroupRole:		 *role,
+				ID:        userID,
+				Username:  user.Username,
+				GroupRole: *role,
 			})
 		}
 
@@ -330,7 +330,7 @@ func (g *Group) GetMembers() (members []GroupMember, err error) {
 }
 
 // GetRoles retrieves all (legacy) roles from the group using the OpenCloud v2 API.
-// Realistically this should retrieve the new 
+// Realistically this should retrieve the new
 //
 // This is a very hacky implementation on retrieving all the roles.
 // Neither the Legacy nor v2 OpenCloud API provide a way of retrieving
@@ -369,7 +369,7 @@ func (g *Group) GetRoles() (roles []GroupRole, err error) {
 		}
 
 		var rolesResponse struct {
-			NextPage        string `json:"nextPageToken"`
+			NextPage   string      `json:"nextPageToken"`
 			GroupRoles []GroupRole `json:"groupRoles"`
 		}
 
@@ -487,9 +487,9 @@ func (g *Group) UpdateUserRole(userID string, roleID string) (*GroupRole, error)
 
 	path := fmt.Sprintf("%s/memberships/%s", g.ID.String(), user.ID.String())
 	requestBody := map[string]any{
-		"path": "groups"+path,
-		"user": "users/"+user.ID.String(),
-		"role": "groups/"+g.ID.String()+"/roles/"+role.ID.String(),
+		"path": "groups" + path,
+		"user": "users/" + user.ID.String(),
+		"role": "groups/" + g.ID.String() + "/roles/" + role.ID.String(),
 	}
 	_, err = g.Client.patch(EndpointCloudGroups+path, nil, requestBody)
 	if err != nil {
