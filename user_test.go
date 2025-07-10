@@ -102,7 +102,7 @@ func TestGetUserThumnail(t *testing.T) {
 		t.Fatal("expected user, got nil")
 	}
 
-	uri, err := user.GetUserThumbnailURI()
+	uri, err := user.GetUserThumbnailURI(nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

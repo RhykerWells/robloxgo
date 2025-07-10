@@ -115,9 +115,9 @@ func (c *Client) GetUserByUsername(username string) (*User, error) {
 //
 // Returns an error if the HTTP request fails, or if the response body cannot
 // be decoded.
-func (u *User) GetUserThumbnailURI(headers ...queryParam) (string, error) {
+func (u *User) GetUserThumbnailURI(queryParams []queryParam) (string, error) {
 	methodURL := EndPointCloudUsers + u.ID.String() + ":generateThumbnail"
-	response, err := u.Client.get(methodURL, headers, nil)
+	response, err := u.Client.get(methodURL, nil, queryParams)
 	if err != nil {
 		return "", err
 	}

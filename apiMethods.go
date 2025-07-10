@@ -106,9 +106,16 @@ func (c *Client) delete(methodURL string, headers []httpHeader) (bool, error) {
 	return true, nil
 }
 
-type keyVal struct {
-	Key   string
+type httpHeader struct {
+	// The key (case sensitive) for the HTTP header
+	Key string
+	// The value for the HTTP header
 	Value string
 }
-type httpHeader = keyVal
-type queryParam = keyVal
+
+type queryParam struct {
+	// The key for the query parameter
+	Key string
+	// The value for the query parameter
+	Value string
+}
