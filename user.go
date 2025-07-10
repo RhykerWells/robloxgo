@@ -51,13 +51,13 @@ func newUser(client *Client) *User {
 // Returns an error if the HTTP request fails, if the response body cannot
 // be decoded, or if the user does not exist.
 func (c *Client) GetUserByID(userID string) (*User, error) {
-	response, err := c.get(EndPointCloudUsers+userID, nil, nil)
+	resp, err := c.get(EndPointCloudUsers+userID, nil, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	user := newUser(c)
-	err = json.NewDecoder(response.Body).Decode(user)
+	err = json.NewDecoder(resp.Body).Decode(user)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +78,7 @@ func (c *Client) GetUserByUsername(username string) (*User, error) {
 	}
 
 	requestBody := map[string]interface{}{"usernames": []string{username}, "excludeBannedUsers": true}
-	response, err := c.post(EndpointLegacyGetUsers, requestBody, nil, nil)
+	resp, err := c.post(EndpointLegacyGetUsers, requestBody, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +86,7 @@ func (c *Client) GetUserByUsername(username string) (*User, error) {
 	var Response struct {
 		Data []User `json:"data"`
 	}
-	err = json.NewDecoder(response.Body).Decode(&Response)
+	err = json.NewDecoder(resp.Body).Decode(&Response)
 	if err != nil {
 		return nil, err
 	}
@@ -97,13 +97,13 @@ func (c *Client) GetUserByUsername(username string) (*User, error) {
 
 	legacyUser := &Response.Data[0]
 
-	response, err = c.get(EndPointCloudUsers+legacyUser.ID.String(), nil, nil)
+	resp, err = c.get(EndPointCloudUsers+legacyUser.ID.String(), nil, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	user := newUser(c)
-	err = json.NewDecoder(response.Body).Decode(user)
+	err = json.NewDecoder(resp.Body).Decode(user)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +117,7 @@ func (c *Client) GetUserByUsername(username string) (*User, error) {
 // be decoded.
 func (u *User) GetUserThumbnailURI(queryParams []queryParam) (string, error) {
 	methodURL := EndPointCloudUsers + u.ID.String() + ":generateThumbnail"
-	response, err := u.Client.get(methodURL, nil, queryParams)
+	resp, err := u.Client.get(methodURL, nil, queryParams)
 	if err != nil {
 		return "", err
 	}
@@ -128,7 +128,7 @@ func (u *User) GetUserThumbnailURI(queryParams []queryParam) (string, error) {
 			ImageURI string `json:"imageUri"`
 		} `json:"response"`
 	}
-	err = json.NewDecoder(response.Body).Decode(&thumbnailResponse)
+	err = json.NewDecoder(resp.Body).Decode(&thumbnailResponse)
 	if err != nil {
 		return "", err
 	}

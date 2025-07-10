@@ -98,13 +98,13 @@ func newGroup(client *Client) *Group {
 // Returns an error if the HTTP request fails, if the response body cannot
 // be decoded, or if the group does not exist.
 func (c *Client) GetGroupByID(groupID string) (*Group, error) {
-	response, err := c.get(EndpointCloudGroups+groupID, nil, nil)
+	resp, err := c.get(EndpointCloudGroups+groupID, nil, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	group := newGroup(c)
-	err = json.NewDecoder(response.Body).Decode(group)
+	err = json.NewDecoder(resp.Body).Decode(group)
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +128,7 @@ func (c *Client) GetGroupByGroupname(groupname string) (*Group, error) {
 		Key:   "groupName",
 		Value: groupname,
 	}
-	response, err := c.get(EndpointLegacyGetGroups, nil, []queryParam{groupHeader})
+	resp, err := c.get(EndpointLegacyGetGroups, nil, []queryParam{groupHeader})
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +139,7 @@ func (c *Client) GetGroupByGroupname(groupname string) (*Group, error) {
 			Name string      `json:"name"`
 		} `json:"data"`
 	}
-	err = json.NewDecoder(response.Body).Decode(&legacyResponse)
+	err = json.NewDecoder(resp.Body).Decode(&legacyResponse)
 	if err != nil {
 		return nil, err
 	}
@@ -150,13 +150,13 @@ func (c *Client) GetGroupByGroupname(groupname string) (*Group, error) {
 
 	legacyGroup := &legacyResponse.Data[0]
 
-	response, err = c.get(EndpointCloudGroups+legacyGroup.ID.String(), nil, nil)
+	resp, err = c.get(EndpointCloudGroups+legacyGroup.ID.String(), nil, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	group := newGroup(c)
-	err = json.NewDecoder(response.Body).Decode(group)
+	err = json.NewDecoder(resp.Body).Decode(group)
 	if err != nil {
 		return nil, err
 	}
@@ -407,12 +407,12 @@ func (g *Group) GetRole(roleID string) (role *GroupRole, err error) {
 	}
 
 	methodURL := EndpointCloudGroups + g.ID.String() + "/roles/" + roleID
-	response, err := g.Client.get(methodURL, nil, nil)
+	resp, err := g.Client.get(methodURL, nil, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	err = json.NewDecoder(response.Body).Decode(&role)
+	err = json.NewDecoder(resp.Body).Decode(&role)
 	if err != nil {
 		return nil, err
 	}
@@ -546,7 +546,7 @@ func (g *Group) GetGroupIcon(large bool, isCircular bool) (string, error) {
 			Value: strconv.FormatBool(isCircular),
 		},
 	}
-	response, err := g.Client.get(EndpointLegacyGetGroupIcon, nil, querySet)
+	resp, err := g.Client.get(EndpointLegacyGetGroupIcon, nil, querySet)
 	if err != nil {
 		return "", err
 	}
@@ -556,7 +556,7 @@ func (g *Group) GetGroupIcon(large bool, isCircular bool) (string, error) {
 			ImageURL string `json:"imageUrl"`
 		} `json:"data"`
 	}
-	err = json.NewDecoder(response.Body).Decode(&thumbnailResponse)
+	err = json.NewDecoder(resp.Body).Decode(&thumbnailResponse)
 	if err != nil {
 		return "", err
 	}
