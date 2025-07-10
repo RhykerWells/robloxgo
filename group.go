@@ -47,14 +47,14 @@ type Group struct {
 }
 
 type GroupMember struct {
-	ID string
-	Username string
+	ID              string
+	Username        string
 	LegacyGroupRole LegacyGroupRole
 }
 
 type LegacyGroupRole struct {
-	ID json.Number `json:"id"`
-	Name string `json:"name"`
+	ID   json.Number `json:"id"`
+	Name string      `json:"name"`
 	Rank json.Number `json:"rank"`
 }
 
@@ -208,7 +208,7 @@ func (g *Group) GetGroupIcon(large bool, isCircular bool) (string, error) {
 //
 // TODO: Implement a Client/Session state and repoll this at set intervals instead?
 func (g *Group) GetMembers() (members []GroupMember, err error) {
-	methodURL := EndpointCloudGroups+g.ID.String() + "/memberships"
+	methodURL := EndpointCloudGroups + g.ID.String() + "/memberships"
 	var pageToken string
 
 	rateLimit := time.NewTicker(200 * time.Millisecond)
@@ -217,27 +217,27 @@ func (g *Group) GetMembers() (members []GroupMember, err error) {
 		<-rateLimit.C
 
 		query := []queryParam{{Key: "maxPageSize", Value: "100"}}
-        if pageToken != "" {
-            query = append(query, queryParam{Key: "pageToken", Value: pageToken})
-        }
+		if pageToken != "" {
+			query = append(query, queryParam{Key: "pageToken", Value: pageToken})
+		}
 
 		resp, err := g.Client.get(methodURL, nil, query)
-        if err != nil {
-            return nil, err
-        }
+		if err != nil {
+			return nil, err
+		}
 
 		var membershipResponse struct {
-			NextPage string `json:"nextPageToken"`
+			NextPage        string `json:"nextPageToken"`
 			GroupMemberShip []struct {
 				User string `json:"user"`
 			} `json:"groupMemberships"`
 		}
 
 		err = json.NewDecoder(resp.Body).Decode(&membershipResponse)
-        resp.Body.Close()
-        if err != nil {
-            return nil, err
-        }
+		resp.Body.Close()
+		if err != nil {
+			return nil, err
+		}
 
 		for _, member := range membershipResponse.GroupMemberShip {
 			userID := strings.TrimPrefix(member.User, "users/")
@@ -250,8 +250,8 @@ func (g *Group) GetMembers() (members []GroupMember, err error) {
 			role, _ := g.GetUsersLegacyRole(userID)
 
 			members = append(members, GroupMember{
-				ID: userID,
-				Username: user.Username,
+				ID:              userID,
+				Username:        user.Username,
 				LegacyGroupRole: *role,
 			})
 		}
@@ -272,9 +272,9 @@ func (g *Group) GetUsersLegacyRole(userID string) (*LegacyGroupRole, error) {
 
 	methodURL := EndpointLegacyGroups + "/v1/users/" + user.ID.String() + "/groups/roles"
 	resp, err := g.Client.get(methodURL, nil, nil)
-    if err != nil {
-        return nil, err
-    }
+	if err != nil {
+		return nil, err
+	}
 
 	var groupData struct {
 		Data []struct {
