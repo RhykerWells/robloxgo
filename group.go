@@ -70,6 +70,20 @@ type GroupMember struct {
 	LegacyGroupRole LegacyGroupRole
 }
 
+type GroupRole struct {
+	// The ID of the role.
+	ID json.Number `json:"id"`
+
+	// The role's name.
+	Name string `json:"displayName"`
+
+	// The role's description.
+	Description string `json:"description"`
+
+	// The role's heirarchial rank.
+	Rank json.Number `json:"rank"`
+}
+
 // LegacyGroupRole stores all data for the legacy role type within a Roblox group,
 type LegacyGroupRole struct {
 	// The ID of the role.
@@ -324,10 +338,104 @@ func (g *Group) GetMembers() (members []GroupMember, err error) {
 		}
 		pageToken = membershipResponse.NextPage
 	}
+
 	return members, nil
 }
 
-// GetUsersLegacyRole retrieves the users (legacy) group role from the Legacy Roblox AP.
+// GetRoles retrieves all (legacy) roles from the group using the OpenCloud v2 API.
+// Realistically this should retrieve the new 
+//
+// This is a very hacky implementation on retrieving all the roles.
+// Neither the Legacy nor v2 OpenCloud API provide a way of retrieving
+// just the role IDs from current group roles.
+//
+// The OpenCloud endpoint imposes a 100 member max + 300 reqs/minute on role retrievals,
+// because of this, when this function is called, we poll it every 200 milliseconds.
+//
+// I personally reccomend having keeping a local state of group roles and update it every day due
+// to how long the process of polling these roles might take depending on number of roles.
+//
+// I am open to other suggestions of refactoring this if the limits are modified,
+// or other methods of retrieving just the IDs are brought into the API.
+//
+// Please note that for larger groups it will take significantly longer to return
+// the full role slice.
+//
+// TODO: Implement a Client/Session state and repoll this at set intervals instead?
+func (g *Group) GetRoles() (roles []GroupRole, err error) {
+	methodURL := EndpointCloudGroups + g.ID.String() + "/roles"
+	var pageToken string
+
+	rateLimit := time.NewTicker(200 * time.Millisecond)
+	defer rateLimit.Stop()
+	for {
+		<-rateLimit.C
+
+		query := []queryParam{{Key: "maxPageSize", Value: "20"}}
+		if pageToken != "" {
+			query = append(query, queryParam{Key: "pageToken", Value: pageToken})
+		}
+
+		resp, err := g.Client.get(methodURL, nil, query)
+		if err != nil {
+			return nil, err
+		}
+
+		var rolesResponse struct {
+			NextPage        string `json:"nextPageToken"`
+			GroupRoles []struct {
+				ID string `json:"id"`
+			} `json:"groupRoles"`
+		}
+
+		err = json.NewDecoder(resp.Body).Decode(&rolesResponse)
+		resp.Body.Close()
+		if err != nil {
+			return nil, err
+		}
+
+		for _, role := range rolesResponse.GroupRoles {
+			groupRole, err := g.GetRole(role.ID)
+			if err != nil {
+				continue
+			}
+
+			roles = append(roles, *groupRole)
+		}
+
+		if rolesResponse.NextPage == "" {
+			break
+		}
+		pageToken = rolesResponse.NextPage
+	}
+
+	return roles, nil
+}
+
+// GetRole retrieves a group role from the Open Cloud API.
+//
+// Returns an error if the HTTP request fails, or if the response body cannot
+// be decoded.
+func (g *Group) GetRole(roleID string) (role *GroupRole, err error) {
+	if roleID == "" {
+		return nil, errors.New("no role id")
+	}
+
+	methodURL := EndpointCloudGroups + g.ID.String() + "/roles/" + roleID
+	response, err := g.Client.get(methodURL, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.NewDecoder(response.Body).Decode(&role)
+	if err != nil {
+		return nil, err
+	}
+
+	return role, nil
+}
+
+// GetUsersLegacyRole retrieves the users (legacy) group role from the Legacy Roblox API.
 //
 // Returns an error if the HTTP request fails, or if the response body cannot
 // be decoded.

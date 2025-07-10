@@ -128,7 +128,29 @@ func TestGetGroupUsers(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if len(members) <= 0 {
-		t.Fatalf("Expected members, got")
+		t.Fatalf("Expected members, got none")
+	}
+}
+
+func TestGetGroupRoles(t *testing.T) {
+	apiKey := os.Getenv("RG_APIKEY")
+	client, _ := Create(apiKey)
+
+	group, err := client.GetGroupByID("36098297")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if group == nil {
+		t.Fatal("expected group, got nil")
+	}
+
+	roles, err := group.GetRoles()
+	t.Log(roles)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(roles) <= 0 {
+		t.Fatalf("Expected roles, got none")
 	}
 }
 
