@@ -42,7 +42,7 @@ func TestGetGroup_PopulatedGroupID(t *testing.T) {
 	apiKey := os.Getenv("RG_APIKEY")
 	client, _ := Create(apiKey)
 
-	group, err := client.GetGroupByID("36098297")
+	group, err := client.GetGroupByID("7")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
