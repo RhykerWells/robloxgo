@@ -251,20 +251,20 @@ func (g *Group) JoinRequestDecline(userID string) (bool, error) {
 	return true, nil
 }
 
-// GetMembers retrieves all user IDs from the group using the OpenCloud v2 API.
+// GetMembers retrieves all users from the group using the OpenCloud v2 API.
 //
-// This is a very hacky implementation on retrieving all the user IDs.
+// This is a very hacky implementation on retrieving all the users.
 // Neither the Legacy nor v2 OpenCloud API provide a way of retrieving
 // just the user IDs from current group members.
 //
 // The OpenCloud endpoint imposes a 100 member max + 300 reqs/minute on member retrievals,
-// because of this, we when this function is called, we poll it every 200 milliseconds.
+// because of this, when this function is called, we poll it every 200 milliseconds.
 //
 // I personally reccomend having keeping a local state of group users and update it every day due
 // to how long the process of polling these users might take depending on group size.
 //
 // I am open to other suggestions of refactoring this if the limits are modified,
-// of other methods of retrieving just the IDs are brought into the API.
+// or other methods of retrieving just the IDs are brought into the API.
 //
 // Please note that for larger groups it will take significantly longer to return
 // the full member slice.
