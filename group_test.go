@@ -152,3 +152,24 @@ func TestGetUsersLegacyRole(t *testing.T) {
 		t.Fatal("expected role, got nil")
 	}
 }
+
+func TestGetGroupJoinRequests(t *testing.T) {
+	apiKey := os.Getenv("RG_APIKEY")
+	client, _ := Create(apiKey)
+
+	group, err := client.GetGroupByID("36098297")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if group == nil {
+		t.Fatal("expected group, got nil")
+	}
+
+	requests, err := group.GetJoinRequests()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(requests) == 0 {
+		t.Fatal("expected requests, got empty")
+	}
+}

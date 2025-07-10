@@ -58,6 +58,12 @@ type LegacyGroupRole struct {
 	Rank json.Number `json:"rank"`
 }
 
+type JoinRequest struct {
+	ID			string
+	Username	string
+	CreatedAt	string
+}
+
 // newGroup creates a new Group instance associated with the given Client.
 //
 // This function is intended for internal use to ensure that every group
@@ -297,4 +303,39 @@ func (g *Group) GetUsersLegacyRole(userID string) (*LegacyGroupRole, error) {
 	}
 
 	return nil, errors.New("user has no role")
+}
+
+func (g *Group) GetJoinRequests() (requests []JoinRequest, err error) {
+	methodURL := EndpointCloudGroups + g.ID.String() + "/join-requests"
+	resp, err := g.Client.get(methodURL, nil, nil)
+	if err != nil {
+		return requests, err
+	}
+
+	var requestData struct {
+		GroupJoinRequests []struct {
+			User string `json:"user"`
+			CreatedAt string `json:"createTime"`
+		} `json:"groupJoinRequests"`
+	}
+	err = json.NewDecoder(resp.Body).Decode(&requestData)
+	if err != nil {
+		return requests, err
+	}
+
+	for _, request := range requestData.GroupJoinRequests {
+		userID := strings.TrimPrefix(request.User, "users/")
+		user, err := g.Client.GetUserByID(userID)
+		if err != nil {
+			continue
+		}
+
+		requests = append(requests, JoinRequest{
+			ID:              userID,
+			Username:        user.Username,
+			CreatedAt:		 request.CreatedAt,
+		})
+	}
+
+	return requests, err
 }
