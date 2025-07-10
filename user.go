@@ -36,7 +36,6 @@ type User struct {
 	Client *Client
 }
 
-
 // userUser creates a new User instance associated with the given Client.
 //
 // This function is intended for internal use to ensure that every user

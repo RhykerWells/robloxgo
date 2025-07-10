@@ -65,6 +65,6 @@ func (c *Client) post(methodURL string, body any) (*http.Response, error) {
 }
 
 type queryParam struct {
-	Key string
+	Key   string
 	Value string
 }
