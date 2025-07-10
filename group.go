@@ -351,3 +351,47 @@ func (g *Group) GetJoinRequests() (requests []JoinRequest, err error) {
 
 	return requests, err
 }
+
+// JoinRequestAccept accepts a pending group join request for the specified user ID.
+//
+// Returns an error if the HTTP request fails, or if the response body cannot
+// be decoded.
+//
+//  Returns true if the join request was successfully accepted.
+func (g *Group) JoinRequestAccept(userID string) (bool, error){
+	_, err := g.Client.GetUserByID(userID)
+	if err != nil {
+		return false, err
+	}
+
+	methodURL := EndpointCloudGroups + g.ID.String() + "/join-requests" + userID + ":accept"
+	requestBody := map[string]interface{}{}
+	_, err = g.Client.post(methodURL, requestBody, nil, nil)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+// JoinRequestAccept declines a pending group join request for the specified user ID.
+//
+// Returns an error if the HTTP request fails, or if the response body cannot
+// be decoded.
+//
+//  Returns true if the join request was successfully declined.
+func (g *Group) JoinRequestDecline(userID string) (bool, error){
+	_, err := g.Client.GetUserByID(userID)
+	if err != nil {
+		return false, err
+	}
+
+	methodURL := EndpointCloudGroups + g.ID.String() + "/join-requests" + userID + ":decline"
+	requestBody := map[string]interface{}{}
+	_, err = g.Client.post(methodURL, requestBody, nil, nil)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
