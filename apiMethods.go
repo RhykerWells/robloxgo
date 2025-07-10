@@ -83,9 +83,39 @@ func (c *Client) post(methodURL string, body any, headers []httpHeader, queryPar
 	return resp, nil
 }
 
-type keyVal struct {
-	Key   string
+func (c *Client) delete(methodURL string, headers []httpHeader) (bool, error) {
+	parsedURL, _ := url.Parse(methodURL)
+	req, err := http.NewRequest(http.MethodDelete, parsedURL.String(), nil)
+	if err != nil {
+		return false, err
+	}
+	for _, header := range headers {
+		req.Header.Set(header.Key, header.Value)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return false, err
+	}
+
+	if resp.StatusCode != ResponseOK.Code {
+		return false, getFullHttpError(resp.StatusCode)
+	}
+
+	return true, nil
+}
+
+type httpHeader struct {
+	// The key (case sensitive) for the HTTP header
+	Key string
+	// The value for the HTTP header
 	Value string
 }
-type httpHeader = keyVal
-type queryParam = keyVal
+
+type queryParam struct {
+	// The key for the query parameter
+	Key string
+	// The value for the query parameter
+	Value string
+}
