@@ -10,6 +10,8 @@ package robloxgo
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 )
@@ -40,8 +42,8 @@ func (c *Client) get(methodURL string, headers []httpHeader, queryParams []query
 		return nil, err
 	}
 
-	if resp.StatusCode != ResponseOK.Code {
-		return nil, getFullHttpError(resp.StatusCode)
+	if err := httpErrorCheck(resp); err != nil {
+		return nil, err
 	}
 
 	return resp, nil
@@ -76,8 +78,8 @@ func (c *Client) post(methodURL string, body any, headers []httpHeader, queryPar
 		return nil, err
 	}
 
-	if resp.StatusCode != ResponseOK.Code {
-		return nil, getFullHttpError(resp.StatusCode)
+	if err := httpErrorCheck(resp); err != nil {
+		return nil, err
 	}
 
 	return resp, nil
@@ -102,8 +104,8 @@ func (c *Client) patch(methodURL string, headers []httpHeader, body any) (bool, 
 		return false, err
 	}
 
-	if resp.StatusCode != ResponseOK.Code {
-		return false, getFullHttpError(resp.StatusCode)
+	if err := httpErrorCheck(resp); err != nil {
+		return false, err
 	}
 
 	return true, nil
@@ -125,8 +127,8 @@ func (c *Client) delete(methodURL string, headers []httpHeader) (bool, error) {
 		return false, err
 	}
 
-	if resp.StatusCode != ResponseOK.Code {
-		return false, getFullHttpError(resp.StatusCode)
+	if resp.StatusCode != http.StatusOK {
+		return false, fmt.Errorf("http error %d: %s", resp.StatusCode, resp.Status)
 	}
 
 	return true, nil
@@ -144,4 +146,18 @@ type queryParam struct {
 	Key string
 	// The value for the query parameter
 	Value string
+}
+
+func httpErrorCheck(resp *http.Response) error {
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("http error %s: unable to read body: %v", resp.Status, err)
+	}
+
+	resp.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("http error %s: %v", resp.Status, resp.Body)
+	}
+	return nil
 }
