@@ -111,3 +111,28 @@ func (c *Client) GetUserByUsername(username string) (*User, error) {
 
 	return user, nil
 }
+
+// ThumbnailURI retrieves a Roblox user's thumbnail URI from the Open Cloud API.
+//
+// Returns an error if the HTTP request fails, or if the response body cannot
+// be decoded.
+func (u *User) GetUserThumbnailURI(queryParams ...queryParam) (string, error) {
+	methodURL := EndPointCloudUsers + u.ID.String() + ":generateThumbnail"
+	response, err := u.Client.get(methodURL, queryParams...)
+	if err != nil {
+		return "", err
+	}
+
+	var thumbnailResponse struct {
+		Response struct {
+			Type     string `json:"@type"`
+			ImageURI string `json:"imageUri"`
+		} `json:"response"`
+	}
+	err = json.NewDecoder(response.Body).Decode(&thumbnailResponse)
+	if err != nil {
+		return "", err
+	}
+
+	return thumbnailResponse.Response.ImageURI, nil
+}
