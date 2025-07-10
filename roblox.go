@@ -13,7 +13,7 @@ import (
 )
 
 // VERSION of RobloxGo. Follows Semantic Versioning. (https://semver.org)
-const VERSION = "0.3.0"
+const VERSION = "0.4.0"
 
 // Create initialises and returns a new Roblox client with the provided API key.
 // The client automatically attaches the API key to all outgoing requests via the "X-API-KEY" header
