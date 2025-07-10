@@ -12,8 +12,8 @@ import (
 	"net/http"
 )
 
-// VERSION of RobloxGo. Follows Semantic Versioning. (https://semver.org)
-const VERSION = "0.4.0"
+// Version of RobloxGo. Follows Semantic Versioning. (https://semver.org)
+const Version = "1.0.0-alpha.1"
 
 // Create initialises and returns a new Roblox client with the provided API key.
 // The client automatically attaches the API key to all outgoing requests via the "X-API-KEY" header
