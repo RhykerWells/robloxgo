@@ -179,6 +179,8 @@ func (g *Group) GetGroupIcon(large bool, isCircular bool) (string, error) {
 	return thumbnailResponse.Data[0].ImageURL, nil
 }
 
+// GetMembers retrieves all user IDs from the group using the OpenCloud v2 API.
+//
 // This is a very hacky implementation on retrieving all the user IDs.
 // Neither the Legacy nor v2 OpenCloud API provide a way of retrieving
 // just the user IDs from current group members.
@@ -194,6 +196,8 @@ func (g *Group) GetGroupIcon(large bool, isCircular bool) (string, error) {
 //
 // Please note that for larger groups it will take significantly longer to return
 // the full member slice.
+//
+// TODO: Implement a Client/Session state and repoll this at set intervals instead?
 func (g *Group) GetMembers() (members []string, err error) {
 	methodURL := EndpointCloudGroups+g.ID.String() + "/memberships"
 	var pageToken string
