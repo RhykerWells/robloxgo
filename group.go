@@ -59,9 +59,9 @@ type LegacyGroupRole struct {
 }
 
 type JoinRequest struct {
-	ID			string
-	Username	string
-	CreatedAt	string
+	ID        string
+	Username  string
+	CreatedAt string
 }
 
 // newGroup creates a new Group instance associated with the given Client.
@@ -326,7 +326,7 @@ func (g *Group) GetJoinRequests() (requests []JoinRequest, err error) {
 
 	var requestData struct {
 		GroupJoinRequests []struct {
-			User string `json:"user"`
+			User      string `json:"user"`
 			CreatedAt string `json:"createTime"`
 		} `json:"groupJoinRequests"`
 	}
@@ -343,9 +343,9 @@ func (g *Group) GetJoinRequests() (requests []JoinRequest, err error) {
 		}
 
 		requests = append(requests, JoinRequest{
-			ID:              userID,
-			Username:        user.Username,
-			CreatedAt:		 request.CreatedAt,
+			ID:        userID,
+			Username:  user.Username,
+			CreatedAt: request.CreatedAt,
 		})
 	}
 
@@ -357,8 +357,8 @@ func (g *Group) GetJoinRequests() (requests []JoinRequest, err error) {
 // Returns an error if the HTTP request fails, or if the response body cannot
 // be decoded.
 //
-//  Returns true if the join request was successfully accepted.
-func (g *Group) JoinRequestAccept(userID string) (bool, error){
+//	Returns true if the join request was successfully accepted.
+func (g *Group) JoinRequestAccept(userID string) (bool, error) {
 	_, err := g.Client.GetUserByID(userID)
 	if err != nil {
 		return false, err
@@ -379,8 +379,8 @@ func (g *Group) JoinRequestAccept(userID string) (bool, error){
 // Returns an error if the HTTP request fails, or if the response body cannot
 // be decoded.
 //
-//  Returns true if the join request was successfully declined.
-func (g *Group) JoinRequestDecline(userID string) (bool, error){
+//	Returns true if the join request was successfully declined.
+func (g *Group) JoinRequestDecline(userID string) (bool, error) {
 	_, err := g.Client.GetUserByID(userID)
 	if err != nil {
 		return false, err
