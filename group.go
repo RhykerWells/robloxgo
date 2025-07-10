@@ -270,6 +270,10 @@ func (g *Group) GetMembers() (members []GroupMember, err error) {
 	return members, nil
 }
 
+// GetUsersLegacyRole retrieves the users (legacy) group role from the Legacy Roblox AP.
+//
+// Returns an error if the HTTP request fails, or if the response body cannot
+// be decoded.
 func (g *Group) GetUsersLegacyRole(userID string) (*LegacyGroupRole, error) {
 	user, err := g.Client.GetUserByID(userID)
 	if err != nil {
@@ -305,6 +309,14 @@ func (g *Group) GetUsersLegacyRole(userID string) (*LegacyGroupRole, error) {
 	return nil, errors.New("user has no role")
 }
 
+// GetJoinRequests retrieves all pending join requests for the group from the Open Cloud AP.
+//
+// It returns these requests in a slice of JoinRequest structs.
+//
+// Each join request includes the user ID, username, and the timestamp the request was created.
+//
+// Returns an error if the HTTP request fails, or if the response body cannot
+// be decoded.
 func (g *Group) GetJoinRequests() (requests []JoinRequest, err error) {
 	methodURL := EndpointCloudGroups + g.ID.String() + "/join-requests"
 	resp, err := g.Client.get(methodURL, nil, nil)
