@@ -83,6 +83,32 @@ func (c *Client) post(methodURL string, body any, headers []httpHeader, queryPar
 	return resp, nil
 }
 
+func (c *Client) patch(methodURL string, headers []httpHeader, body any) (bool, error) {
+	var requestBody bytes.Buffer
+	json.NewEncoder(&requestBody).Encode(body)
+
+	parsedURL, _ := url.Parse(methodURL)
+	req, err := http.NewRequest(http.MethodPatch, parsedURL.String(), &requestBody)
+	if err != nil {
+		return false, err
+	}
+	for _, header := range headers {
+		req.Header.Set(header.Key, header.Value)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return false, err
+	}
+
+	if resp.StatusCode != ResponseOK.Code {
+		return false, getFullHttpError(resp.StatusCode)
+	}
+
+	return true, nil
+}
+
 func (c *Client) delete(methodURL string, headers []httpHeader) (bool, error) {
 	parsedURL, _ := url.Parse(methodURL)
 	req, err := http.NewRequest(http.MethodDelete, parsedURL.String(), nil)
