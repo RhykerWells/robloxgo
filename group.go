@@ -11,6 +11,8 @@ import (
 	"encoding/json"
 	"errors"
 	"strconv"
+	"strings"
+	"time"
 )
 
 // A Group stores all data for an individual Roblox group.
@@ -29,6 +31,9 @@ type Group struct {
 
 	// The group's member count.
 	MemberCount json.Number `json:"memberCount"`
+
+	// A slice of Roblox userIDs currently present in the Group.
+	Members []string
 
 	// The group's entry state.
 	// Returns true if public, false if set to request only
@@ -172,4 +177,63 @@ func (g *Group) GetGroupIcon(large bool, isCircular bool) (string, error) {
 	}
 
 	return thumbnailResponse.Data[0].ImageURL, nil
+}
+
+// This is a very hacky implementation on retrieving all the user IDs.
+// Neither the Legacy nor v2 OpenCloud API provide a way of retrieving
+// just the user IDs from current group members.
+//
+// The OpenCloud endpoint imposes a 100 member max + 300 reqs/minute on member retrievals,
+// because of this, we when this function is called, we poll it every 200 milliseconds.
+//
+// I personally reccomend having keeping a local state of group users and update it every day due
+// to how long the process of polling these users might take depending on group size.
+//
+// I am open to other suggestions of refactoring this if the limits are modified,
+// of other methods of retrieving just the IDs are brought into the API.
+//
+// Please note that for larger groups it will take significantly longer to return
+// the full member slice.
+func (g *Group) GetMembers() (members []string, err error) {
+	methodURL := EndpointCloudGroups+g.ID.String() + "/memberships"
+	var pageToken string
+
+	rateLimit := time.NewTicker(200 * time.Millisecond)
+	defer rateLimit.Stop()
+	for {
+		<-rateLimit.C
+
+		query := []queryParam{{Key: "maxPageSize", Value: "100"}}
+        if pageToken != "" {
+            query = append(query, queryParam{Key: "pageToken", Value: pageToken})
+        }
+
+		resp, err := g.Client.get(methodURL, nil, query)
+        if err != nil {
+            return nil, err
+        }
+
+		var membershipResponse struct {
+			NextPage string `json:"nextPageToken"`
+			GroupMemberShip []struct {
+				User string `json:"user"`
+			} `json:"groupMemberships"`
+		}
+
+		err = json.NewDecoder(resp.Body).Decode(&membershipResponse)
+        resp.Body.Close()
+        if err != nil {
+            return nil, err
+        }
+
+		for _, member := range membershipResponse.GroupMemberShip {
+			members = append(members, strings.TrimPrefix(member.User, "users/"))
+		}
+
+		if membershipResponse.NextPage == "" {
+			break
+		}
+		pageToken = membershipResponse.NextPage
+	}
+	return members, nil
 }

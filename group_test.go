@@ -110,3 +110,25 @@ func TestGetGroupIcon(t *testing.T) {
 		t.Fatal("expected link, got nil")
 	}
 }
+
+func TestGetGroupUsers(t *testing.T) {
+	apiKey := os.Getenv("RG_APIKEY")
+	client, _ := Create(apiKey)
+
+	group, err := client.GetGroupByID("7")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if group == nil {
+		t.Fatal("expected group, got nil")
+	}
+
+	members, err := group.GetMembers()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(members) <= 0 {
+		t.Fatalf("Expected members, got")
+	}
+	t.Logf("%s | Retrieved %d members out of %v",group.Groupname, len(members), group.MemberCount)
+}
