@@ -46,6 +46,12 @@ type Group struct {
 	Client *Client
 }
 
+type JoinRequest struct {
+	ID        string
+	Username  string
+	CreatedAt string
+}
+
 type GroupMember struct {
 	ID              string
 	Username        string
@@ -56,12 +62,6 @@ type LegacyGroupRole struct {
 	ID   json.Number `json:"id"`
 	Name string      `json:"name"`
 	Rank json.Number `json:"rank"`
-}
-
-type JoinRequest struct {
-	ID        string
-	Username  string
-	CreatedAt string
 }
 
 // newGroup creates a new Group instance associated with the given Client.
@@ -146,52 +146,92 @@ func (c *Client) GetGroupByGroupname(groupname string) (*Group, error) {
 	return group, nil
 }
 
-// GetGroupIcon retrieves a Roblox group's thumbnail URl from the legacy Roblox API.
+
+// GetJoinRequests retrieves all pending join requests for the group from the Open Cloud AP.
+//
+// It returns these requests in a slice of JoinRequest structs.
+//
+// Each join request includes the user ID, username, and the timestamp the request was created.
+//
+// Returns an error if the HTTP request fails, or if the response body cannot
+// be decoded.
+func (g *Group) GetJoinRequests() (requests []JoinRequest, err error) {
+	methodURL := EndpointCloudGroups + g.ID.String() + "/join-requests"
+	resp, err := g.Client.get(methodURL, nil, nil)
+	if err != nil {
+		return requests, err
+	}
+
+	var requestData struct {
+		GroupJoinRequests []struct {
+			User      string `json:"user"`
+			CreatedAt string `json:"createTime"`
+		} `json:"groupJoinRequests"`
+	}
+	err = json.NewDecoder(resp.Body).Decode(&requestData)
+	if err != nil {
+		return requests, err
+	}
+
+	for _, request := range requestData.GroupJoinRequests {
+		userID := strings.TrimPrefix(request.User, "users/")
+		user, err := g.Client.GetUserByID(userID)
+		if err != nil {
+			continue
+		}
+
+		requests = append(requests, JoinRequest{
+			ID:        userID,
+			Username:  user.Username,
+			CreatedAt: request.CreatedAt,
+		})
+	}
+
+	return requests, err
+}
+
+// JoinRequestAccept accepts a pending group join request for the specified user ID.
 //
 // Returns an error if the HTTP request fails, or if the response body cannot
 // be decoded.
 //
-// This method may be deprecated if Roblox removes the
-// legacy https://thumbnails.roblox.com/v1/groups/icons endpoint
-func (g *Group) GetGroupIcon(large bool, isCircular bool) (string, error) {
-	size := "150x150"
-	if large {
-		size = "420x420"
-	}
-	querySet := []queryParam{
-		{
-			Key:   "groupIds",
-			Value: g.ID.String(),
-		},
-		{
-			Key:   "format",
-			Value: "Png",
-		},
-		{
-			Key:   "size",
-			Value: size,
-		},
-		{
-			Key:   "isCircular",
-			Value: strconv.FormatBool(isCircular),
-		},
-	}
-	response, err := g.Client.get(EndpointLegacyGetGroupIcon, nil, querySet)
+// Returns true if the join request was successfully accepted.
+func (g *Group) JoinRequestAccept(userID string) (bool, error) {
+	_, err := g.Client.GetUserByID(userID)
 	if err != nil {
-		return "", err
+		return false, err
 	}
 
-	var thumbnailResponse struct {
-		Data []struct {
-			ImageURL string `json:"imageUrl"`
-		} `json:"data"`
-	}
-	err = json.NewDecoder(response.Body).Decode(&thumbnailResponse)
+	methodURL := EndpointCloudGroups + g.ID.String() + "/join-requests" + userID + ":accept"
+	requestBody := map[string]interface{}{}
+	_, err = g.Client.post(methodURL, requestBody, nil, nil)
 	if err != nil {
-		return "", err
+		return false, err
 	}
 
-	return thumbnailResponse.Data[0].ImageURL, nil
+	return true, nil
+}
+
+// JoinRequestAccept declines a pending group join request for the specified user ID.
+//
+// Returns an error if the HTTP request fails, or if the response body cannot
+// be decoded.
+//
+// Returns true if the join request was successfully declined.
+func (g *Group) JoinRequestDecline(userID string) (bool, error) {
+	_, err := g.Client.GetUserByID(userID)
+	if err != nil {
+		return false, err
+	}
+
+	methodURL := EndpointCloudGroups + g.ID.String() + "/join-requests" + userID + ":decline"
+	requestBody := map[string]interface{}{}
+	_, err = g.Client.post(methodURL, requestBody, nil, nil)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 // GetMembers retrieves all user IDs from the group using the OpenCloud v2 API.
@@ -309,89 +349,50 @@ func (g *Group) GetUsersLegacyRole(userID string) (*LegacyGroupRole, error) {
 	return nil, errors.New("user has no role")
 }
 
-// GetJoinRequests retrieves all pending join requests for the group from the Open Cloud AP.
-//
-// It returns these requests in a slice of JoinRequest structs.
-//
-// Each join request includes the user ID, username, and the timestamp the request was created.
-//
-// Returns an error if the HTTP request fails, or if the response body cannot
-// be decoded.
-func (g *Group) GetJoinRequests() (requests []JoinRequest, err error) {
-	methodURL := EndpointCloudGroups + g.ID.String() + "/join-requests"
-	resp, err := g.Client.get(methodURL, nil, nil)
-	if err != nil {
-		return requests, err
-	}
-
-	var requestData struct {
-		GroupJoinRequests []struct {
-			User      string `json:"user"`
-			CreatedAt string `json:"createTime"`
-		} `json:"groupJoinRequests"`
-	}
-	err = json.NewDecoder(resp.Body).Decode(&requestData)
-	if err != nil {
-		return requests, err
-	}
-
-	for _, request := range requestData.GroupJoinRequests {
-		userID := strings.TrimPrefix(request.User, "users/")
-		user, err := g.Client.GetUserByID(userID)
-		if err != nil {
-			continue
-		}
-
-		requests = append(requests, JoinRequest{
-			ID:        userID,
-			Username:  user.Username,
-			CreatedAt: request.CreatedAt,
-		})
-	}
-
-	return requests, err
-}
-
-// JoinRequestAccept accepts a pending group join request for the specified user ID.
+// GetGroupIcon retrieves a Roblox group's thumbnail URl from the legacy Roblox API.
 //
 // Returns an error if the HTTP request fails, or if the response body cannot
 // be decoded.
 //
-// Returns true if the join request was successfully accepted.
-func (g *Group) JoinRequestAccept(userID string) (bool, error) {
-	_, err := g.Client.GetUserByID(userID)
+// This method may be deprecated if Roblox removes the
+// legacy https://thumbnails.roblox.com/v1/groups/icons endpoint
+func (g *Group) GetGroupIcon(large bool, isCircular bool) (string, error) {
+	size := "150x150"
+	if large {
+		size = "420x420"
+	}
+	querySet := []queryParam{
+		{
+			Key:   "groupIds",
+			Value: g.ID.String(),
+		},
+		{
+			Key:   "format",
+			Value: "Png",
+		},
+		{
+			Key:   "size",
+			Value: size,
+		},
+		{
+			Key:   "isCircular",
+			Value: strconv.FormatBool(isCircular),
+		},
+	}
+	response, err := g.Client.get(EndpointLegacyGetGroupIcon, nil, querySet)
 	if err != nil {
-		return false, err
+		return "", err
 	}
 
-	methodURL := EndpointCloudGroups + g.ID.String() + "/join-requests" + userID + ":accept"
-	requestBody := map[string]interface{}{}
-	_, err = g.Client.post(methodURL, requestBody, nil, nil)
+	var thumbnailResponse struct {
+		Data []struct {
+			ImageURL string `json:"imageUrl"`
+		} `json:"data"`
+	}
+	err = json.NewDecoder(response.Body).Decode(&thumbnailResponse)
 	if err != nil {
-		return false, err
+		return "", err
 	}
 
-	return true, nil
-}
-
-// JoinRequestAccept declines a pending group join request for the specified user ID.
-//
-// Returns an error if the HTTP request fails, or if the response body cannot
-// be decoded.
-//
-// Returns true if the join request was successfully declined.
-func (g *Group) JoinRequestDecline(userID string) (bool, error) {
-	_, err := g.Client.GetUserByID(userID)
-	if err != nil {
-		return false, err
-	}
-
-	methodURL := EndpointCloudGroups + g.ID.String() + "/join-requests" + userID + ":decline"
-	requestBody := map[string]interface{}{}
-	_, err = g.Client.post(methodURL, requestBody, nil, nil)
-	if err != nil {
-		return false, err
-	}
-
-	return true, nil
+	return thumbnailResponse.Data[0].ImageURL, nil
 }
