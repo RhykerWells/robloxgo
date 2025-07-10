@@ -16,10 +16,13 @@ import (
 	"net/url"
 )
 
-// get is an internal method that makes a GET request to the specified URL
+// get is an internal method that  sends an internal HTTP GET request to the specified URL.
 //
-// If the response status code is not 200 (OK/Successful), it
-// returns a custom error describing the HTTP status code
+// It returns the HTTP response if the status code is 200 (OK).
+// If the response status code is not 200, it returns an error
+// containing the status and response body.
+//
+// The functions caller must close the returned response body.
 func (c *Client) get(methodURL string, headers []httpHeader, queryParams []queryParam) (*http.Response, error) {
 	parsedURL, _ := url.Parse(methodURL)
 	q := parsedURL.Query()
@@ -49,10 +52,12 @@ func (c *Client) get(methodURL string, headers []httpHeader, queryParams []query
 	return resp, nil
 }
 
-// post is an internal method that makes a POST request to the specified URL
+// post is an internal method that sends an HTTP POST request to the specified URL with optional headers and a request body.
 //
-// If the response status code is not 200 (OK/Successful), it
-// returns a custom error describing the HTTP status code
+// It returns the HTTP response if the status code is 200 (OK).
+// If the status code is not 200, it returns an error containing the status and response body.
+//
+// The caller must close the response body.
 func (c *Client) post(methodURL string, body any, headers []httpHeader, queryParams []queryParam) (*http.Response, error) {
 	var requestBody bytes.Buffer
 	json.NewEncoder(&requestBody).Encode(body)
@@ -85,6 +90,12 @@ func (c *Client) post(methodURL string, body any, headers []httpHeader, queryPar
 	return resp, nil
 }
 
+// patch is an internal method that sends an HTTP PATCH request to the specified URL with optional headers.
+//
+// It returns the HTTP response if the status code is 200 (OK).
+// If the status code is not 200, it returns an error containing the status and response body.
+//
+// The caller must close the response body.
 func (c *Client) patch(methodURL string, headers []httpHeader, body any) (bool, error) {
 	var requestBody bytes.Buffer
 	json.NewEncoder(&requestBody).Encode(body)
@@ -111,6 +122,12 @@ func (c *Client) patch(methodURL string, headers []httpHeader, body any) (bool, 
 	return true, nil
 }
 
+// delete is an internal method that sends an HTTP DELETE request to the specified URL with optional headers.
+//
+// It returns the HTTP response if the status code is 200 (OK).
+// If the status code is not 200, it returns an error containing the status and response body.
+//
+// The caller must close the response body.
 func (c *Client) delete(methodURL string, headers []httpHeader) (bool, error) {
 	parsedURL, _ := url.Parse(methodURL)
 	req, err := http.NewRequest(http.MethodDelete, parsedURL.String(), nil)
