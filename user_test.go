@@ -89,3 +89,24 @@ func TestGetUser_PopulatedUsername(t *testing.T) {
 		t.Fatal("expected user, got nil")
 	}
 }
+
+func TestGetUserThumnail(t *testing.T) {
+	apiKey := os.Getenv("RG_APIKEY")
+	client, _ := Create(apiKey)
+
+	user, err := client.GetUserByID("369780411")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if user == nil {
+		t.Fatal("expected user, got nil")
+	}
+
+	uri, err := user.GetUserThumbnailURI()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if uri == "" {
+		t.Fatal("expected user, got nil")
+	}
+}
