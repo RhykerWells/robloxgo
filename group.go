@@ -10,6 +10,7 @@ package robloxgo
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -460,6 +461,42 @@ func (g *Group) GetUserRole(userID string) (*GroupRole, error) {
 	}
 
 	return nil, errors.New("user has no role")
+}
+
+// UpdateUserRole updates a given users role in the group using the Open Cloud API
+//
+// Returns an error if the HTTP request fails, or if the response body cannot
+// be decoded.
+func (g *Group) UpdateUserRole(userID string, roleID string) (*GroupRole, error) {
+	if userID == "" {
+		return nil, errors.New("no user id")
+	}
+	if roleID == "" {
+		return nil, errors.New("no role id")
+	}
+
+	user, err := g.Client.GetUserByID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	role, err := g.GetRole(roleID)
+	if err != nil {
+		return nil, err
+	}
+
+	path := fmt.Sprintf("%s/memberships/%s", g.ID.String(), user.ID.String())
+	requestBody := map[string]any{
+		"path": "groups"+path,
+		"user": "users/"+user.ID.String(),
+		"role": "groups/"+g.ID.String()+"/roles/"+role.ID.String(),
+	}
+	_, err = g.Client.patch(EndpointCloudGroups+path, nil, requestBody)
+	if err != nil {
+		return nil, err
+	}
+
+	return role, nil
 }
 
 // RemoveUser removes a given user from the group using the legacy Roblox API
