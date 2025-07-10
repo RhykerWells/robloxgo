@@ -90,11 +90,11 @@ func TestGetGroup_PopulatedGroupname(t *testing.T) {
 	}
 }
 
-func TestGetGroupIcon(t *testing.T) {
+func TestGetGroupJoinRequests(t *testing.T) {
 	apiKey := os.Getenv("RG_APIKEY")
 	client, _ := Create(apiKey)
 
-	group, err := client.GetGroupByID("7")
+	group, err := client.GetGroupByID("36098297")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -102,12 +102,12 @@ func TestGetGroupIcon(t *testing.T) {
 		t.Fatal("expected group, got nil")
 	}
 
-	url, err := group.GetGroupIcon(false, false)
+	requests, err := group.GetJoinRequests()
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if url == "" {
-		t.Fatal("expected link, got nil")
+	if len(requests) == 0 {
+		t.Fatal("expected requests, got empty")
 	}
 }
 
@@ -153,11 +153,11 @@ func TestGetUsersLegacyRole(t *testing.T) {
 	}
 }
 
-func TestGetGroupJoinRequests(t *testing.T) {
+func TestGetGroupIcon(t *testing.T) {
 	apiKey := os.Getenv("RG_APIKEY")
 	client, _ := Create(apiKey)
 
-	group, err := client.GetGroupByID("36098297")
+	group, err := client.GetGroupByID("7")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -165,11 +165,11 @@ func TestGetGroupJoinRequests(t *testing.T) {
 		t.Fatal("expected group, got nil")
 	}
 
-	requests, err := group.GetJoinRequests()
+	url, err := group.GetGroupIcon(false, false)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if len(requests) == 0 {
-		t.Fatal("expected requests, got empty")
+	if url == "" {
+		t.Fatal("expected link, got nil")
 	}
 }
