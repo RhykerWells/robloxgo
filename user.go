@@ -9,7 +9,6 @@ package robloxgo
 
 import (
 	"encoding/json"
-	"errors"
 )
 
 // A User stores all data for an individual Roblox user.
@@ -51,6 +50,9 @@ func newUser(client *Client) *User {
 // Returns an error if the HTTP request fails, if the response body cannot
 // be decoded, or if the user does not exist.
 func (c *Client) GetUserByID(userID string) (*User, error) {
+	if userID == "" {
+		return nil, ErrNoUserID
+	}
 	resp, err := c.get(EndPointCloudUsers+userID, nil, nil)
 	if err != nil {
 		return nil, err
@@ -74,7 +76,7 @@ func (c *Client) GetUserByID(userID string) (*User, error) {
 // legacy https://users.roblox.com/v1/usernames/users endpoint
 func (c *Client) GetUserByUsername(username string) (*User, error) {
 	if username == "" {
-		return nil, errors.New("no username")
+		return nil, ErrNoUsername
 	}
 
 	requestBody := map[string]interface{}{"usernames": []string{username}, "excludeBannedUsers": true}
@@ -92,7 +94,7 @@ func (c *Client) GetUserByUsername(username string) (*User, error) {
 	}
 
 	if len(Response.Data) == 0 {
-		return nil, errors.New("invalid username provided")
+		return nil, ErrInvalidUsername
 	}
 
 	legacyUser := &Response.Data[0]

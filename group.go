@@ -9,7 +9,6 @@ package robloxgo
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -121,7 +120,7 @@ func (c *Client) GetGroupByID(groupID string) (*Group, error) {
 // legacy https://groups.roblox.com/v1/groups/search/lookup endpoint
 func (c *Client) GetGroupByGroupname(groupname string) (*Group, error) {
 	if groupname == "" {
-		return nil, errors.New("no groupname")
+		return nil, ErrNoGroupname
 	}
 
 	groupHeader := queryParam{
@@ -145,7 +144,7 @@ func (c *Client) GetGroupByGroupname(groupname string) (*Group, error) {
 	}
 
 	if len(legacyResponse.Data) == 0 || legacyResponse.Data[0].Name != groupname {
-		return nil, errors.New("invalid groupname provided")
+		return nil, ErrInvalidGroupname
 	}
 
 	legacyGroup := &legacyResponse.Data[0]
@@ -403,7 +402,7 @@ func (g *Group) GetRoles() (roles []GroupRole, err error) {
 // be decoded.
 func (g *Group) GetRole(roleID string) (role *GroupRole, err error) {
 	if roleID == "" {
-		return nil, errors.New("no role id")
+		return nil, ErrNoRoleID
 	}
 
 	methodURL := EndpointCloudGroups + g.ID.String() + "/roles/" + roleID
@@ -460,7 +459,7 @@ func (g *Group) GetUserRole(userID string) (*GroupRole, error) {
 		return groupRole, nil
 	}
 
-	return nil, errors.New("user has no role")
+	return nil, ErrUserHasNoRole
 }
 
 // UpdateUserRole updates a given users role in the group using the Open Cloud API
@@ -469,10 +468,10 @@ func (g *Group) GetUserRole(userID string) (*GroupRole, error) {
 // be decoded.
 func (g *Group) UpdateUserRole(userID string, roleID string) (*GroupRole, error) {
 	if userID == "" {
-		return nil, errors.New("no user id")
+		return nil, ErrNoUserID
 	}
 	if roleID == "" {
-		return nil, errors.New("no role id")
+		return nil, ErrNoRoleID
 	}
 
 	user, err := g.Client.GetUserByID(userID)
@@ -508,7 +507,7 @@ func (g *Group) UpdateUserRole(userID string, roleID string) (*GroupRole, error)
 // legacy https://groups.roblox.com/v1/groups/{groupID}/users/{memberID} endpoint
 func (g *Group) RemoveUser(userID string) (bool, error) {
 	if userID == "" {
-		return false, errors.New("no user id")
+		return false, ErrNoUserID
 	}
 
 	ok, err := g.Client.delete(EndpointLegacyGroups+g.ID.String()+"/users/"+userID, nil)

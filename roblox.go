@@ -8,7 +8,6 @@
 package robloxgo
 
 import (
-	"errors"
 	"net/http"
 )
 
@@ -21,7 +20,7 @@ const Version = "1.0.0-alpha.1"
 // Returns an error if the API key is empty
 func Create(apikey string) (*Client, error) {
 	if apikey == "" {
-		return nil, errors.New("no api key provided")
+		return nil, ErrNoAPIKey
 	}
 
 	httpClient := &http.Client{
