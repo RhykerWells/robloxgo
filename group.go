@@ -46,21 +46,39 @@ type Group struct {
 	Client *Client
 }
 
+// JoinRequest stores all data for a pending user request to join a Roblox group.
 type JoinRequest struct {
+	// The ID of the user.
 	ID        string
+
+	// The user's username.
 	Username  string
+
+	// The user's join request date.
 	CreatedAt string
 }
 
+// GroupMember stores all data for a user who is currently a member of a Roblox group.
 type GroupMember struct {
-	ID              string
-	Username        string
+	// The ID of the member.
+	ID        string
+
+	// The member's username.
+	Username  string
+
+	// The member's legacy group role.
 	LegacyGroupRole LegacyGroupRole
 }
 
+// LegacyGroupRole stores all data for the legacy role type within a Roblox group,
 type LegacyGroupRole struct {
+	// The ID of the role.
 	ID   json.Number `json:"id"`
+
+	// The role's name.
 	Name string      `json:"name"`
+
+	// The role's heirarchial rank.
 	Rank json.Number `json:"rank"`
 }
 
