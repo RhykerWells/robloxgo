@@ -357,7 +357,7 @@ func (g *Group) GetJoinRequests() (requests []JoinRequest, err error) {
 // Returns an error if the HTTP request fails, or if the response body cannot
 // be decoded.
 //
-//	Returns true if the join request was successfully accepted.
+// Returns true if the join request was successfully accepted.
 func (g *Group) JoinRequestAccept(userID string) (bool, error) {
 	_, err := g.Client.GetUserByID(userID)
 	if err != nil {
@@ -379,7 +379,7 @@ func (g *Group) JoinRequestAccept(userID string) (bool, error) {
 // Returns an error if the HTTP request fails, or if the response body cannot
 // be decoded.
 //
-//	Returns true if the join request was successfully declined.
+// Returns true if the join request was successfully declined.
 func (g *Group) JoinRequestDecline(userID string) (bool, error) {
 	_, err := g.Client.GetUserByID(userID)
 	if err != nil {
