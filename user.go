@@ -11,27 +11,27 @@ import (
 	"encoding/json"
 )
 
-// A User stores all data for an individual Roblox user.
+// User represents a Roblox user and its associated metadata.
 type User struct {
-	// The ID of the user.
+	// ID is the unique identifier of the user.
 	ID json.Number `json:"id"`
 
-	// The user's username.
+	// Username is the user's Roblox account name.
 	Username string `json:"name"`
 
-	// The user's display name, if it is set.
+	// Displayname is the user's chosen display name, if set.
 	Displayname string `json:"displayName"`
 
-	// The user's premium status.
+	// Premium indicates whether the user has Roblox Premium.
 	Premium bool `json:"premium"`
 
-	// The user's chosen language option.
+	// Locale is the user's preferred language or region setting.
 	Locale string `json:"locale"`
 
-	// The user's account creation date.
+	// CreatedAt is the ISO 8601 timestamp of when the account was created.
 	CreatedAt string `json:"createTime"`
 
-	// The client used to connect to Roblox
+	// Client is the API client used to interact with the user.
 	Client *Client
 }
 

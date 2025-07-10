@@ -15,70 +15,69 @@ import (
 	"time"
 )
 
-// A Group stores all data for an individual Roblox group.
+// Group represents a Roblox group and its associated metadata.
 type Group struct {
-	// The ID of the group.
+	// ID is the unique identifier of the group.
 	ID json.Number `json:"id"`
 
-	// The group's name.
+	// Groupname is the display name of the group.
 	Groupname string `json:"displayName"`
 
-	// The group's description.
+	// Description is the group's public description text.
 	Description string `json:"description"`
 
-	// The group's owner ID.
+	// OwnerID is the user ID of the group owner.
 	OwnerID string `json:"owner"`
 
-	// The group's member count.
+	// MemberCount is the number of users currently in the group.
 	MemberCount json.Number `json:"memberCount"`
 
-	// The group's entry state.
-	// Returns true if public, false if set to request only
+	// PublicEntry indicates whether users can join the group freely (true) or require approval (false).
 	PublicEntry bool `json:"publicEntryAllowed"`
 
-	// The groups locked state
+	// Locked reports whether the group is locked from further modifications.
 	Locked bool `json:"locked"`
 
-	// The group's account creation date.
+	// CreatedAt is the ISO 8601 timestamp of when the group was created.
 	CreatedAt string `json:"createTime"`
 
-	// The client used to connect to Roblox.
+	// Client is the API client used to interact with the group.
 	Client *Client
 }
 
-// JoinRequest stores all data for a pending user request to join a Roblox group.
+// JoinRequest represents a user's request to join a Roblox group.
 type JoinRequest struct {
-	// The ID of the user.
+	// ID is the unique identifier of the user making the request.
 	ID string
 
-	// The user's username.
+	// Username is the Roblox username of the user.
 	Username string
 
-	// The user's join request date.
+	// CreatedAt is the timestamp of when the join request was submitted.
 	CreatedAt string
 }
 
-// GroupMember stores all data for a user who is currently a member of a Roblox group.
+// GroupMember represents a user who is currently a member of a Roblox group.
 type GroupMember struct {
-	// The ID of the member.
+	// ID is the unique identifier of the group member.
 	ID string
 
-	// The member's username.
+	// Username is the Roblox username of the member.
 	Username string
 
-	// The member's legacy group role.
+	// GroupRole is the member's role within the group.
 	GroupRole GroupRole
 }
 
-// GroupRole stores all data for a role within a Roblox group,
+// GroupRole represents a role within a Roblox group.
 type GroupRole struct {
-	// The ID of the role.
+	// ID is the unique identifier of the role.
 	ID json.Number `json:"id"`
 
-	// The role's name.
+	// Name is the display name of the role.
 	Name string `json:"displayName"`
 
-	// The role's heirarchial rank.
+	// Rank is the hierarchical rank of the role within the group.
 	Rank json.Number `json:"rank"`
 }
 
