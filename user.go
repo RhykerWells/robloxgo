@@ -36,10 +36,10 @@ type User struct {
 	Client *Client
 }
 
-// userUser creates a new User instance associated with the given Client.
+// newUser creates a new User instance associated with the given Client.
 //
 // This function is intended for internal use to ensure that every user
-// has a reference to the Client, enable methods on the User object to make api calls.
+// has a reference to the Client, and enable methods on the User object to make api calls.
 func newUser(client *Client) *User {
 	return &User{
 		Client: client,
