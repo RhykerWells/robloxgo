@@ -130,5 +130,25 @@ func TestGetGroupUsers(t *testing.T) {
 	if len(members) <= 0 {
 		t.Fatalf("Expected members, got")
 	}
-	t.Logf("%s | Retrieved %d members out of %v",group.Groupname, len(members), group.MemberCount)
+}
+
+func TestGetUsersLegacyRole(t *testing.T) {
+	apiKey := os.Getenv("RG_APIKEY")
+	client, _ := Create(apiKey)
+
+	group, err := client.GetGroupByID("7")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if group == nil {
+		t.Fatal("expected group, got nil")
+	}
+
+	role, err := group.GetUsersLegacyRole("21557")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if role == nil {
+		t.Fatal("expected role, got nil")
+	}
 }

@@ -49,6 +49,12 @@ type Group struct {
 	Client *Client
 }
 
+type LegacyGroupRole struct {
+	ID json.Number `json:"id"`
+	Name string `json:"name"`
+	Rank json.Number `json:"rank"`
+}
+
 // newGroup creates a new Group instance associated with the given Client.
 //
 // This function is intended for internal use to ensure that every group
@@ -240,4 +246,39 @@ func (g *Group) GetMembers() (members []string, err error) {
 		pageToken = membershipResponse.NextPage
 	}
 	return members, nil
+}
+
+func (g *Group) GetUsersLegacyRole(userID string) (*LegacyGroupRole, error) {
+	user, err := g.Client.GetUserByID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	methodURL := EndpointLegacyGroups + "/v1/users/" + user.ID.String() + "/groups/roles"
+	resp, err := g.Client.get(methodURL, nil, nil)
+    if err != nil {
+        return nil, err
+    }
+
+	var groupData struct {
+		Data []struct {
+			Group struct {
+				ID json.Number `json:"id"`
+			} `json:"group"`
+			Role LegacyGroupRole `json:"role"`
+		} `json:"data"`
+	}
+	err = json.NewDecoder(resp.Body).Decode(&groupData)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, group := range groupData.Data {
+		if group.Group.ID.String() != g.ID.String() {
+			continue
+		}
+		return &group.Role, nil
+	}
+
+	return nil, errors.New("user has no role")
 }
