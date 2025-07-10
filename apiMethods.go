@@ -11,19 +11,27 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
+	"net/url"
 )
 
 // get is an internal method that makes a GET request to the specified URL
 //
 // If the response status code is not 200 (OK/Successful), it
 // returns a custom error describing the HTTP status code
-func (c *Client) get(methodURL string, queryParams ...queryParam) (*http.Response, error) {
-	req, err := http.NewRequest(http.MethodGet, methodURL, nil)
+func (c *Client) get(methodURL string, headers []httpHeader, queryParams []queryParam) (*http.Response, error) {
+	parsedURL, _ := url.Parse(methodURL)
+	q := parsedURL.Query()
+	for _, param := range queryParams {
+		q.Set(param.Key, param.Value)
+	}
+	parsedURL.RawQuery = q.Encode()
+
+	req, err := http.NewRequest(http.MethodGet, parsedURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
-	for _, queryParam := range queryParams {
-		req.Header.Set(queryParam.Key, queryParam.Value)
+	for _, header := range headers {
+		req.Header.Set(header.Key, header.Value)
 	}
 	req.Header.Set("Content-Type", "application/json")
 
@@ -64,7 +72,9 @@ func (c *Client) post(methodURL string, body any) (*http.Response, error) {
 	return resp, nil
 }
 
-type queryParam struct {
+type keyVal struct {
 	Key   string
 	Value string
 }
+type httpHeader = keyVal
+type queryParam = keyVal

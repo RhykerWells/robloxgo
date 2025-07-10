@@ -51,7 +51,7 @@ func newUser(client *Client) *User {
 // Returns an error if the HTTP request fails, if the response body cannot
 // be decoded, or if the user does not exist.
 func (c *Client) GetUserByID(userID string) (*User, error) {
-	response, err := c.get(EndPointCloudUsers + userID)
+	response, err := c.get(EndPointCloudUsers + userID, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +97,7 @@ func (c *Client) GetUserByUsername(username string) (*User, error) {
 
 	legacyUser := &Response.Data[0]
 
-	response, err = c.get(EndPointCloudUsers + legacyUser.ID.String())
+	response, err = c.get(EndPointCloudUsers + legacyUser.ID.String(), nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -115,9 +115,9 @@ func (c *Client) GetUserByUsername(username string) (*User, error) {
 //
 // Returns an error if the HTTP request fails, or if the response body cannot
 // be decoded.
-func (u *User) GetUserThumbnailURI(queryParams ...queryParam) (string, error) {
+func (u *User) GetUserThumbnailURI(headers ...queryParam) (string, error) {
 	methodURL := EndPointCloudUsers + u.ID.String() + ":generateThumbnail"
-	response, err := u.Client.get(methodURL, queryParams...)
+	response, err := u.Client.get(methodURL, headers, nil)
 	if err != nil {
 		return "", err
 	}
