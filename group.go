@@ -100,10 +100,12 @@ func (c *Client) GetGroupByID(groupID string) (*Group, error) {
 	if groupID == "" {
 		return nil, ErrNoGroupID
 	}
+
 	resp, err := c.get(EndpointCloudGroups+groupID, nil, nil)
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 
 	group := newGroup(c)
 	err = json.NewDecoder(resp.Body).Decode(group)
@@ -135,6 +137,7 @@ func (c *Client) GetGroupByGroupname(groupname string) (*Group, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 
 	var legacyResponse struct {
 		Data []struct {
@@ -152,11 +155,11 @@ func (c *Client) GetGroupByGroupname(groupname string) (*Group, error) {
 	}
 
 	legacyGroup := &legacyResponse.Data[0]
-
 	resp, err = c.get(EndpointCloudGroups+legacyGroup.ID.String(), nil, nil)
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 
 	group := newGroup(c)
 	err = json.NewDecoder(resp.Body).Decode(group)
@@ -181,6 +184,7 @@ func (g *Group) GetJoinRequests() (requests []JoinRequest, err error) {
 	if err != nil {
 		return requests, err
 	}
+	defer resp.Body.Close()
 
 	var requestData struct {
 		GroupJoinRequests []struct {
@@ -216,6 +220,10 @@ func (g *Group) GetJoinRequests() (requests []JoinRequest, err error) {
 // Returns an error if the user does not exist, the HTTP request fails,
 // or the response cannot be decoded.
 func (g *Group) JoinRequestAccept(userID string) (bool, error) {
+	if userID == "" {
+		return false, ErrNoUserID
+	}
+
 	_, err := g.Client.GetUserByID(userID)
 	if err != nil {
 		return false, err
@@ -223,10 +231,11 @@ func (g *Group) JoinRequestAccept(userID string) (bool, error) {
 
 	methodURL := EndpointCloudGroups + g.ID.String() + "/join-requests" + userID + ":accept"
 	requestBody := map[string]interface{}{}
-	_, err = g.Client.post(methodURL, requestBody, nil, nil)
+	resp, err := g.Client.post(methodURL, requestBody, nil, nil)
 	if err != nil {
 		return false, err
 	}
+	resp.Body.Close()
 
 	return true, nil
 }
@@ -237,6 +246,10 @@ func (g *Group) JoinRequestAccept(userID string) (bool, error) {
 // Returns an error if the user does not exist, the HTTP request fails,
 // or the response cannot be decoded.
 func (g *Group) JoinRequestDecline(userID string) (bool, error) {
+	if userID == "" {
+		return false, ErrNoUserID
+	}
+
 	_, err := g.Client.GetUserByID(userID)
 	if err != nil {
 		return false, err
@@ -244,10 +257,11 @@ func (g *Group) JoinRequestDecline(userID string) (bool, error) {
 
 	methodURL := EndpointCloudGroups + g.ID.String() + "/join-requests" + userID + ":decline"
 	requestBody := map[string]interface{}{}
-	_, err = g.Client.post(methodURL, requestBody, nil, nil)
+	resp, err := g.Client.post(methodURL, requestBody, nil, nil)
 	if err != nil {
 		return false, err
 	}
+	resp.Body.Close()
 
 	return true, nil
 }
@@ -284,21 +298,21 @@ func (g *Group) GetMembers() (members []GroupMember, err error) {
 		if err != nil {
 			return nil, err
 		}
+		defer resp.Body.Close()
 
 		var membershipResponse struct {
 			NextPage        string `json:"nextPageToken"`
-			GroupMemberShip []struct {
+			GroupMembership []struct {
 				User string `json:"user"`
 			} `json:"groupMemberships"`
 		}
 
 		err = json.NewDecoder(resp.Body).Decode(&membershipResponse)
-		resp.Body.Close()
 		if err != nil {
 			return nil, err
 		}
 
-		for _, member := range membershipResponse.GroupMemberShip {
+		for _, member := range membershipResponse.GroupMembership {
 			userID := strings.TrimPrefix(member.User, "users/")
 
 			user, err := g.Client.GetUserByID(userID)
@@ -347,6 +361,7 @@ func (g *Group) GetRoles() (roles []GroupRole, err error) {
 		if err != nil {
 			return nil, err
 		}
+		defer resp.Body.Close()
 
 		var rolesResponse struct {
 			NextPage   string      `json:"nextPageToken"`
@@ -354,7 +369,6 @@ func (g *Group) GetRoles() (roles []GroupRole, err error) {
 		}
 
 		err = json.NewDecoder(resp.Body).Decode(&rolesResponse)
-		resp.Body.Close()
 		if err != nil {
 			return nil, err
 		}
@@ -392,6 +406,7 @@ func (g *Group) GetRole(roleID string) (role *GroupRole, err error) {
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 
 	err = json.NewDecoder(resp.Body).Decode(&role)
 	if err != nil {
@@ -408,6 +423,10 @@ func (g *Group) GetRole(roleID string) (role *GroupRole, err error) {
 // Returns an error if the user does not exist, if the user has no role in the group,
 // if the HTTP request fails, or if the response body cannot be decoded.
 func (g *Group) GetUserRole(userID string) (*GroupRole, error) {
+	if userID == "" {
+		return nil, ErrNoUserID
+	}
+
 	user, err := g.Client.GetUserByID(userID)
 	if err != nil {
 		return nil, err
@@ -418,6 +437,7 @@ func (g *Group) GetUserRole(userID string) (*GroupRole, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 
 	var groupData struct {
 		Data []struct {
@@ -537,6 +557,7 @@ func (g *Group) GetGroupIcon(large bool, isCircular bool) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	defer resp.Body.Close()
 
 	var thumbnailResponse struct {
 		Data []struct {

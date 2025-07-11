@@ -54,10 +54,12 @@ func (c *Client) GetUserByID(userID string) (*User, error) {
 	if userID == "" {
 		return nil, ErrNoUserID
 	}
+
 	resp, err := c.get(EndPointCloudUsers+userID, nil, nil)
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 
 	user := newUser(c)
 	err = json.NewDecoder(resp.Body).Decode(user)
@@ -86,6 +88,7 @@ func (c *Client) GetUserByUsername(username string) (*User, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 
 	var Response struct {
 		Data []User `json:"data"`
@@ -100,11 +103,11 @@ func (c *Client) GetUserByUsername(username string) (*User, error) {
 	}
 
 	legacyUser := &Response.Data[0]
-
 	resp, err = c.get(EndPointCloudUsers+legacyUser.ID.String(), nil, nil)
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 
 	user := newUser(c)
 	err = json.NewDecoder(resp.Body).Decode(user)
@@ -127,6 +130,7 @@ func (u *User) GetUserThumbnailURI(queryParams []queryParam) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	defer resp.Body.Close()
 
 	var thumbnailResponse struct {
 		Response struct {

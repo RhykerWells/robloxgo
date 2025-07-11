@@ -94,8 +94,6 @@ func (c *Client) post(methodURL string, body any, headers []httpHeader, queryPar
 //
 // It returns the HTTP response if the status code is 200 (OK).
 // If the status code is not 200, it returns an error containing the status and response body.
-//
-// The caller must close the response body.
 func (c *Client) patch(methodURL string, headers []httpHeader, body any) (bool, error) {
 	var requestBody bytes.Buffer
 	json.NewEncoder(&requestBody).Encode(body)
@@ -114,6 +112,7 @@ func (c *Client) patch(methodURL string, headers []httpHeader, body any) (bool, 
 	if err != nil {
 		return false, err
 	}
+	defer resp.Body.Close()
 
 	if err := httpErrorCheck(resp); err != nil {
 		return false, err
@@ -126,8 +125,6 @@ func (c *Client) patch(methodURL string, headers []httpHeader, body any) (bool, 
 //
 // It returns the HTTP response if the status code is 200 (OK).
 // If the status code is not 200, it returns an error containing the status and response body.
-//
-// The caller must close the response body.
 func (c *Client) delete(methodURL string, headers []httpHeader) (bool, error) {
 	parsedURL, _ := url.Parse(methodURL)
 	req, err := http.NewRequest(http.MethodDelete, parsedURL.String(), nil)
@@ -143,6 +140,7 @@ func (c *Client) delete(methodURL string, headers []httpHeader) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		return false, fmt.Errorf("http error %d: %s", resp.StatusCode, resp.Status)
