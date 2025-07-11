@@ -81,21 +81,25 @@ type GroupRole struct {
 	Rank json.Number `json:"rank"`
 }
 
-// newGroup creates a new Group instance associated with the given Client.
+// newGroup returns a new Group instance associated with the provided Client.
 //
-// This function is intended for internal use to ensure that every group
-// has a reference to the Client, and enable methods on the Group object to make api calls.
+// It is intended for internal use to ensure that each Group is linked to a Client,
+// enabling the Group's methods to perform API calls.
 func newGroup(client *Client) *Group {
 	return &Group{
 		Client: client,
 	}
 }
 
-// GetGroupByID retrieves a Roblox group from the Open Cloud API by their group ID.
+// GetGroupByID retrieves a Roblox group from the Open Cloud API using the provided group ID.
 //
-// Returns an error if the HTTP request fails, if the response body cannot
-// be decoded, or if the group does not exist.
+// It returns a Group instance associated with the current Client.
+// An error is returned if the group ID is empty, if the HTTP request fails,
+// if the response cannot be decoded, or if the group does not exist.
 func (c *Client) GetGroupByID(groupID string) (*Group, error) {
+	if groupID == "" {
+		return nil, ErrNoGroupID
+	}
 	resp, err := c.get(EndpointCloudGroups+groupID, nil, nil)
 	if err != nil {
 		return nil, err
@@ -110,13 +114,14 @@ func (c *Client) GetGroupByID(groupID string) (*Group, error) {
 	return group, nil
 }
 
-// GetGroupByGroupname retrieves a Roblox group from the Legacy Roblox API by their group Groupname (case sensitive).
+// GetGroupByGroupname retrieves a Roblox group using the legacy Roblox API by its exact group name (case sensitive).
 //
-// Returns an error if the HTTP request fails, if the response body cannot
-// be decoded, or if the group does not exist.
+// It returns a Group instance associated with the current Client.
+// An error is returned if the group name is empty, the HTTP request fails,
+// the response cannot be decoded, or if the group cannot be found.
 //
-// This method may be deprecated if Roblox removes the
-// legacy https://groups.roblox.com/v1/groups/search/lookup endpoint
+// Note: This method relies on the legacy endpoint at https://groups.roblox.com/v1/groups/search/lookup,
+// which may be deprecated or removed by Roblox in the future.
 func (c *Client) GetGroupByGroupname(groupname string) (*Group, error) {
 	if groupname == "" {
 		return nil, ErrNoGroupname
@@ -163,14 +168,13 @@ func (c *Client) GetGroupByGroupname(groupname string) (*Group, error) {
 	return group, nil
 }
 
-// GetJoinRequests retrieves all pending join requests for the group from the Open Cloud AP.
+// GetJoinRequests retrieves all pending join requests for the group using the Open Cloud API.
 //
-// It returns these requests in a slice of JoinRequest structs.
+// It returns a slice of JoinRequest structs, each containing the user ID, username,
+// and the timestamp the request was created.
 //
-// Each join request includes the user ID, username, and the timestamp the request was created.
-//
-// Returns an error if the HTTP request fails, or if the response body cannot
-// be decoded.
+// An error is returned if the HTTP request fails or if the response cannot be decoded.
+// If an individual user lookup fails, that request is skipped and the remaining are still returned.
 func (g *Group) GetJoinRequests() (requests []JoinRequest, err error) {
 	methodURL := EndpointCloudGroups + g.ID.String() + "/join-requests"
 	resp, err := g.Client.get(methodURL, nil, nil)
@@ -206,12 +210,11 @@ func (g *Group) GetJoinRequests() (requests []JoinRequest, err error) {
 	return requests, err
 }
 
-// JoinRequestAccept accepts a pending group join request for the specified user ID.
+// JoinRequestAccept approves a pending group join request for the specified user ID.
 //
-// Returns an error if the HTTP request fails, or if the response body cannot
-// be decoded.
-//
-// Returns true if the join request was successfully accepted.
+// Returns true if the request was successfully accepted.
+// Returns an error if the user does not exist, the HTTP request fails,
+// or the response cannot be decoded.
 func (g *Group) JoinRequestAccept(userID string) (bool, error) {
 	_, err := g.Client.GetUserByID(userID)
 	if err != nil {
@@ -228,12 +231,11 @@ func (g *Group) JoinRequestAccept(userID string) (bool, error) {
 	return true, nil
 }
 
-// JoinRequestAccept declines a pending group join request for the specified user ID.
+// JoinRequestDecline rejects a pending group join request for the specified user ID.
 //
-// Returns an error if the HTTP request fails, or if the response body cannot
-// be decoded.
-//
-// Returns true if the join request was successfully declined.
+// Returns true if the request was successfully declined.
+// Returns an error if the user does not exist, the HTTP request fails,
+// or the response cannot be decoded.
 func (g *Group) JoinRequestDecline(userID string) (bool, error) {
 	_, err := g.Client.GetUserByID(userID)
 	if err != nil {
@@ -250,25 +252,20 @@ func (g *Group) JoinRequestDecline(userID string) (bool, error) {
 	return true, nil
 }
 
-// GetMembers retrieves all users from the group using the OpenCloud v2 API.
+// GetMembers retrieves all users in the group using the Open Cloud v2 API.
 //
-// This is a very hacky implementation on retrieving all the users.
-// Neither the Legacy nor v2 OpenCloud API provide a way of retrieving
-// just the user IDs from current group members.
+// Due to current limitations of both the legacy and Open Cloud APIs, there is no
+// direct way to fetch only the user IDs of group members. This method works around that
+// by paginating over the full member list (100 users per request) and polling the
+// endpoint every 200 milliseconds to respect Roblox’s rate limit of 300 requests/minute.
 //
-// The OpenCloud endpoint imposes a 100 member max + 300 reqs/minute on member retrievals,
-// because of this, when this function is called, we poll it every 200 milliseconds.
+// For large groups, this process can be slow. It is recommended to cache member data
+// locally and update it periodically instead of calling this method frequently.
 //
-// I personally reccomend having keeping a local state of group users and update it every day due
-// to how long the process of polling these users might take depending on group size.
+// Returns a slice of GroupMember structs. An error is returned if any request fails
+// or a response cannot be decoded. Individual user lookups that fail are skipped.
 //
-// I am open to other suggestions of refactoring this if the limits are modified,
-// or other methods of retrieving just the IDs are brought into the API.
-//
-// Please note that for larger groups it will take significantly longer to return
-// the full member slice.
-//
-// TODO: Implement a Client/Session state and repoll this at set intervals instead?
+// TODO: Consider caching state and repolling periodically in a background session.
 func (g *Group) GetMembers() (members []GroupMember, err error) {
 	methodURL := EndpointCloudGroups + g.ID.String() + "/memberships"
 	var pageToken string
@@ -327,26 +324,11 @@ func (g *Group) GetMembers() (members []GroupMember, err error) {
 	return members, nil
 }
 
-// GetRoles retrieves all (legacy) roles from the group using the OpenCloud v2 API.
-// Realistically this should retrieve the new
+// GetRoles returns all roles defined within the group.
 //
-// This is a very hacky implementation on retrieving all the roles.
-// Neither the Legacy nor v2 OpenCloud API provide a way of retrieving
-// just the role IDs from current group roles.
-//
-// The OpenCloud endpoint imposes a 100 member max + 300 reqs/minute on role retrievals,
-// because of this, when this function is called, we poll it every 200 milliseconds.
-//
-// I personally reccomend having keeping a local state of group roles and update it every day due
-// to how long the process of polling these roles might take depending on number of roles.
-//
-// I am open to other suggestions of refactoring this if the limits are modified,
-// or other methods of retrieving just the IDs are brought into the API.
-//
-// Please note that for larger groups it will take significantly longer to return
-// the full role slice.
-//
-// TODO: Implement a Client/Session state and repoll this at set intervals instead?
+// Each role is retrieved and resolved into a complete GroupRole object.
+// If a role lookup fails, it is skipped.
+// Returns an error if the HTTP request fails or the response cannot be decoded.
 func (g *Group) GetRoles() (roles []GroupRole, err error) {
 	methodURL := EndpointCloudGroups + g.ID.String() + "/roles"
 	var pageToken string
@@ -395,10 +377,11 @@ func (g *Group) GetRoles() (roles []GroupRole, err error) {
 	return roles, nil
 }
 
-// GetRole retrieves a group role from the Open Cloud API.
+// GetRole retrieves a specific group role by its role ID.
 //
-// Returns an error if the HTTP request fails, or if the response body cannot
-// be decoded.
+// Returns a GroupRole associated with the given role ID.
+// Returns an error if the role ID is empty, the HTTP request fails,
+// or the response body cannot be decoded.
 func (g *Group) GetRole(roleID string) (role *GroupRole, err error) {
 	if roleID == "" {
 		return nil, ErrNoRoleID
@@ -418,10 +401,12 @@ func (g *Group) GetRole(roleID string) (role *GroupRole, err error) {
 	return role, nil
 }
 
-// GetUserRole retrieves the users group role from both the Legacy Roblox API & Open Cloud API.
+// GetUserRole retrieves the role of a specific user within the group.
 //
-// Returns an error if the HTTP request fails, or if the response body cannot
-// be decoded.
+// This method uses both the legacy Roblox API and the Open Cloud API to determine
+// the user's role. It returns a GroupRole pointer if the user has a role in the group.
+// Returns an error if the user does not exist, if the user has no role in the group,
+// if the HTTP request fails, or if the response body cannot be decoded.
 func (g *Group) GetUserRole(userID string) (*GroupRole, error) {
 	user, err := g.Client.GetUserByID(userID)
 	if err != nil {
@@ -461,10 +446,11 @@ func (g *Group) GetUserRole(userID string) (*GroupRole, error) {
 	return nil, ErrUserHasNoRole
 }
 
-// UpdateUserRole updates a given users role in the group using the Open Cloud API
+// UpdateUserRole sets a user's role in the group using the Open Cloud API.
 //
-// Returns an error if the HTTP request fails, or if the response body cannot
-// be decoded.
+// Returns the updated GroupRole if the operation is successful.
+// Returns an error if the user ID or role ID is empty, the user or role cannot be found,
+// the HTTP request fails, or the response cannot be decoded.
 func (g *Group) UpdateUserRole(userID string, roleID string) (*GroupRole, error) {
 	if userID == "" {
 		return nil, ErrNoUserID
@@ -497,13 +483,13 @@ func (g *Group) UpdateUserRole(userID string, roleID string) (*GroupRole, error)
 	return role, nil
 }
 
-// RemoveUser removes a given user from the group using the legacy Roblox API
+// RemoveUser removes a user from the group using the legacy Roblox API.
 //
-// Returns an error if the HTTP request fails, or if the response body cannot
-// be decoded.
+// Returns true if the user was successfully removed.
+// Returns an error if the user ID is empty, the HTTP request fails, or the response cannot be decoded.
 //
-// This method may be deprecated if Roblox removes the
-// legacy https://groups.roblox.com/v1/groups/{groupID}/users/{memberID} endpoint
+// Note: This method uses the legacy endpoint at
+// https://groups.roblox.com/v1/groups/{groupID}/users/{memberID}, which may be deprecated in the future.
 func (g *Group) RemoveUser(userID string) (bool, error) {
 	if userID == "" {
 		return false, ErrNoUserID
@@ -514,13 +500,16 @@ func (g *Group) RemoveUser(userID string) (bool, error) {
 	return ok, err
 }
 
-// GetGroupIcon retrieves a Roblox group's thumbnail URl from the legacy Roblox API.
+// GetGroupIcon retrieves the group's thumbnail image URL using the legacy Roblox API.
 //
-// Returns an error if the HTTP request fails, or if the response body cannot
-// be decoded.
+// The size of the icon can be set to either 150x150 or 420x420 based on the `large` flag.
+// The `isCircular` flag determines whether the returned icon is circular.
 //
-// This method may be deprecated if Roblox removes the
-// legacy https://thumbnails.roblox.com/v1/groups/icons endpoint
+// Returns the image URL as a string. An error is returned if the HTTP request fails
+// or if the response cannot be decoded.
+//
+// Note: This method uses the legacy endpoint at
+// https://thumbnails.roblox.com/v1/groups/icons, which may be deprecated in the future.
 func (g *Group) GetGroupIcon(large bool, isCircular bool) (string, error) {
 	size := "150x150"
 	if large {

@@ -35,20 +35,21 @@ type User struct {
 	Client *Client
 }
 
-// newUser creates a new User instance associated with the given Client.
+// newUser returns a new User instance associated with the provided Client.
 //
-// This function is intended for internal use to ensure that every user
-// has a reference to the Client, and enable methods on the User object to make api calls.
+// It is intended for internal use to ensure that each User is linked to a Client,
+// enabling the User's methods to perform API calls.
 func newUser(client *Client) *User {
 	return &User{
 		Client: client,
 	}
 }
 
-// GetUserByID retrieves a Roblox user from the Open Cloud API by their user ID.
+/// GetUserByID retrieves a Roblox user from the Open Cloud API using the provided user ID.
 //
-// Returns an error if the HTTP request fails, if the response body cannot
-// be decoded, or if the user does not exist.
+// It returns a User instance associated with the current Client.
+// An error is returned if the user ID is empty, if the HTTP request fails,
+// if the response cannot be decoded, or if the user does not exist.
 func (c *Client) GetUserByID(userID string) (*User, error) {
 	if userID == "" {
 		return nil, ErrNoUserID
@@ -67,13 +68,14 @@ func (c *Client) GetUserByID(userID string) (*User, error) {
 	return user, nil
 }
 
-// GetUserByUsername retrieves a Roblox user from the Legacy Roblox API by their user Username.
+// GetUserByUsername retrieves a Roblox user by their username using the legacy Roblox API.
 //
-// Returns an error if the HTTP request fails, if the response body cannot
-// be decoded, or if the user does not exist.
+// It returns a User instance associated with the current Client.
+// An error is returned if the username is empty, the HTTP request fails,
+// the response cannot be decoded, or if the user does not exist.
 //
-// This method may be deprecated if Roblox removes the
-// legacy https://users.roblox.com/v1/usernames/users endpoint
+// Note: This method depends on the legacy endpoint at https://users.roblox.com/v1/usernames/users,
+// which may be deprecated or removed by Roblox in the future.
 func (c *Client) GetUserByUsername(username string) (*User, error) {
 	if username == "" {
 		return nil, ErrNoUsername
@@ -113,10 +115,12 @@ func (c *Client) GetUserByUsername(username string) (*User, error) {
 	return user, nil
 }
 
-// ThumbnailURI retrieves a Roblox user's thumbnail URI from the Open Cloud API.
+// GetUserThumbnailURI retrieves the user's thumbnail image URI using the Open Cloud API.
 //
-// Returns an error if the HTTP request fails, or if the response body cannot
-// be decoded.
+// The request can be customized using optional query parameters such as format, size,
+// and circular cropping. Returns the thumbnail URI as a string.
+//
+// Returns an error if the HTTP request fails or if the response body cannot be decoded.
 func (u *User) GetUserThumbnailURI(queryParams []queryParam) (string, error) {
 	methodURL := EndPointCloudUsers + u.ID.String() + ":generateThumbnail"
 	resp, err := u.Client.get(methodURL, nil, queryParams)
