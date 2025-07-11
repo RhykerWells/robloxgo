@@ -112,6 +112,7 @@ func (c *Client) GetGroupByID(groupID string) (*Group, error) {
 	if err != nil {
 		return nil, err
 	}
+	group.OwnerID = strings.TrimPrefix(group.OwnerID, "users/")
 
 	return group, nil
 }
@@ -167,6 +168,7 @@ func (c *Client) GetGroupByGroupname(groupname string) (*Group, error) {
 		return nil, err
 	}
 	group.Groupname = legacyGroup.Name
+	group.OwnerID = strings.TrimPrefix(group.OwnerID, "users/")
 
 	return group, nil
 }
