@@ -8,11 +8,15 @@
 package robloxgo
 
 import (
+	"fmt"
 	"net/http"
+	"runtime"
 )
 
 // Version of RobloxGo. Follows Semantic Versioning. (https://semver.org)
 const Version = "1.0.0-alpha.1"
+
+var robloxGoUserAgent = fmt.Sprintf("RobloxGo v%s (+https://github.com/RhykerWells/robloxgo); Go %s", Version, runtime.Version())
 
 // Create initialises and returns a new Roblox client with the provided API key.
 // The client automatically attaches the API key to all outgoing requests via the "X-API-KEY" header

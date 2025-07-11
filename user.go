@@ -45,7 +45,7 @@ func newUser(client *Client) *User {
 	}
 }
 
-/// GetUserByID retrieves a Roblox user from the Open Cloud API using the provided user ID.
+// GetUserByID retrieves a Roblox user from the Open Cloud API using the provided user ID.
 //
 // It returns a User instance associated with the current Client.
 // An error is returned if the user ID is empty, if the HTTP request fails,

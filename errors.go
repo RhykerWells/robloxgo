@@ -10,7 +10,7 @@ var (
 	ErrInvalidUsername = errors.New("invalid username provide")
 	ErrUserHasNoRole   = errors.New("this user has no role")
 
-	ErrNoGroupID		= errors.New("no group id provided")
+	ErrNoGroupID        = errors.New("no group id provided")
 	ErrNoGroupname      = errors.New("no group name provided")
 	ErrInvalidGroupname = errors.New("invalid group name provided")
 
