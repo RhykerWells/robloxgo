@@ -9,55 +9,60 @@ package robloxgo
 
 import (
 	"encoding/json"
-	"errors"
 )
 
-// A User stores all data for an individual Roblox user.
+// User represents a Roblox user and its associated metadata.
 type User struct {
-	// The ID of the user.
+	// ID is the unique identifier of the user.
 	ID json.Number `json:"id"`
 
-	// The user's username.
+	// Username is the user's Roblox account name.
 	Username string `json:"name"`
 
-	// The user's display name, if it is set.
+	// Displayname is the user's chosen display name, if set.
 	Displayname string `json:"displayName"`
 
-	// The user's premium status.
+	// Premium indicates whether the user has Roblox Premium.
 	Premium bool `json:"premium"`
 
-	// The user's chosen language option.
+	// Locale is the user's preferred language or region setting.
 	Locale string `json:"locale"`
 
-	// The user's account creation date.
+	// CreatedAt is the ISO 8601 timestamp of when the account was created.
 	CreatedAt string `json:"createTime"`
 
-	// The client used to connect to Roblox
+	// Client is the API client used to interact with the user.
 	Client *Client
 }
 
-// newUser creates a new User instance associated with the given Client.
+// newUser returns a new User instance associated with the provided Client.
 //
-// This function is intended for internal use to ensure that every user
-// has a reference to the Client, and enable methods on the User object to make api calls.
+// It is intended for internal use to ensure that each User is linked to a Client,
+// enabling the User's methods to perform API calls.
 func newUser(client *Client) *User {
 	return &User{
 		Client: client,
 	}
 }
 
-// GetUserByID retrieves a Roblox user from the Open Cloud API by their user ID.
+// GetUserByID retrieves a Roblox user from the Open Cloud API using the provided user ID.
 //
-// Returns an error if the HTTP request fails, if the response body cannot
-// be decoded, or if the user does not exist.
+// It returns a User instance associated with the current Client.
+// An error is returned if the user ID is empty, if the HTTP request fails,
+// if the response cannot be decoded, or if the user does not exist.
 func (c *Client) GetUserByID(userID string) (*User, error) {
-	response, err := c.get(EndPointCloudUsers+userID, nil, nil)
+	if userID == "" {
+		return nil, ErrNoUserID
+	}
+
+	resp, err := c.get(EndPointCloudUsers+userID, nil, nil)
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 
 	user := newUser(c)
-	err = json.NewDecoder(response.Body).Decode(user)
+	err = json.NewDecoder(resp.Body).Decode(user)
 	if err != nil {
 		return nil, err
 	}
@@ -65,45 +70,47 @@ func (c *Client) GetUserByID(userID string) (*User, error) {
 	return user, nil
 }
 
-// GetUserByUsername retrieves a Roblox user from the Legacy Roblox API by their user Username.
+// GetUserByUsername retrieves a Roblox user by their username using the legacy Roblox API.
 //
-// Returns an error if the HTTP request fails, if the response body cannot
-// be decoded, or if the user does not exist.
+// It returns a User instance associated with the current Client.
+// An error is returned if the username is empty, the HTTP request fails,
+// the response cannot be decoded, or if the user does not exist.
 //
-// This method may be deprecated if Roblox removes the
-// legacy https://users.roblox.com/v1/usernames/users endpoint
+// Note: This method depends on the legacy endpoint at https://users.roblox.com/v1/usernames/users,
+// which may be deprecated or removed by Roblox in the future.
 func (c *Client) GetUserByUsername(username string) (*User, error) {
 	if username == "" {
-		return nil, errors.New("no username")
+		return nil, ErrNoUsername
 	}
 
 	requestBody := map[string]interface{}{"usernames": []string{username}, "excludeBannedUsers": true}
-	response, err := c.post(EndpointLegacyGetUsers, requestBody, nil, nil)
+	resp, err := c.post(EndpointLegacyGetUsers, requestBody, nil, nil)
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 
 	var Response struct {
 		Data []User `json:"data"`
 	}
-	err = json.NewDecoder(response.Body).Decode(&Response)
+	err = json.NewDecoder(resp.Body).Decode(&Response)
 	if err != nil {
 		return nil, err
 	}
 
 	if len(Response.Data) == 0 {
-		return nil, errors.New("invalid username provided")
+		return nil, ErrInvalidUsername
 	}
 
 	legacyUser := &Response.Data[0]
-
-	response, err = c.get(EndPointCloudUsers+legacyUser.ID.String(), nil, nil)
+	resp, err = c.get(EndPointCloudUsers+legacyUser.ID.String(), nil, nil)
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 
 	user := newUser(c)
-	err = json.NewDecoder(response.Body).Decode(user)
+	err = json.NewDecoder(resp.Body).Decode(user)
 	if err != nil {
 		return nil, err
 	}
@@ -111,16 +118,19 @@ func (c *Client) GetUserByUsername(username string) (*User, error) {
 	return user, nil
 }
 
-// ThumbnailURI retrieves a Roblox user's thumbnail URI from the Open Cloud API.
+// GetUserThumbnailURI retrieves the user's thumbnail image URI using the Open Cloud API.
 //
-// Returns an error if the HTTP request fails, or if the response body cannot
-// be decoded.
+// The request can be customized using optional query parameters such as format, size,
+// and circular cropping. Returns the thumbnail URI as a string.
+//
+// Returns an error if the HTTP request fails or if the response body cannot be decoded.
 func (u *User) GetUserThumbnailURI(queryParams []queryParam) (string, error) {
 	methodURL := EndPointCloudUsers + u.ID.String() + ":generateThumbnail"
-	response, err := u.Client.get(methodURL, nil, queryParams)
+	resp, err := u.Client.get(methodURL, nil, queryParams)
 	if err != nil {
 		return "", err
 	}
+	defer resp.Body.Close()
 
 	var thumbnailResponse struct {
 		Response struct {
@@ -128,7 +138,7 @@ func (u *User) GetUserThumbnailURI(queryParams []queryParam) (string, error) {
 			ImageURI string `json:"imageUri"`
 		} `json:"response"`
 	}
-	err = json.NewDecoder(response.Body).Decode(&thumbnailResponse)
+	err = json.NewDecoder(resp.Body).Decode(&thumbnailResponse)
 	if err != nil {
 		return "", err
 	}
