@@ -14,7 +14,7 @@ import (
 )
 
 // Version of RobloxGo. Follows Semantic Versioning. (https://semver.org)
-const Version = "1.0.0-rc.2"
+const Version = "1.0.0-rc.3"
 
 var robloxGoUserAgent = fmt.Sprintf("RobloxGo v%s (+https://github.com/RhykerWells/robloxgo); Go %s", Version, runtime.Version())
 
