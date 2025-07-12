@@ -224,7 +224,7 @@ func (g *Group) JoinRequestAccept(userID string) (bool, error) {
 		return false, err
 	}
 
-	methodURL := EndpointCloudGroups + g.ID.String() + "/join-requests" + userID + ":accept"
+	methodURL := EndpointCloudGroups + g.ID.String() + "/join-requests/" + userID + ":accept"
 	requestBody := map[string]interface{}{}
 	resp, err := g.Client.post(methodURL, requestBody, nil, nil)
 	if err != nil {
@@ -250,7 +250,7 @@ func (g *Group) JoinRequestDecline(userID string) (bool, error) {
 		return false, err
 	}
 
-	methodURL := EndpointCloudGroups + g.ID.String() + "/join-requests" + userID + ":decline"
+	methodURL := EndpointCloudGroups + g.ID.String() + "/join-requests/" + userID + ":decline"
 	requestBody := map[string]interface{}{}
 	resp, err := g.Client.post(methodURL, requestBody, nil, nil)
 	if err != nil {
@@ -485,7 +485,7 @@ func (g *Group) UpdateUserRole(userID string, roleID string) (*GroupRole, error)
 	}
 
 	path := fmt.Sprintf("%s/memberships/%s", g.ID.String(), user.ID.String())
-	requestBody := map[string]any{
+	requestBody := map[string]string{
 		"path": "groups" + path,
 		"user": "users/" + user.ID.String(),
 		"role": "groups/" + g.ID.String() + "/roles/" + role.ID.String(),
