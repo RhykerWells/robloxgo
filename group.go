@@ -47,7 +47,7 @@ type JoinRequest struct {
 	Username string
 
 	// CreatedAt is the timestamp of when the join request was submitted.
-	CreatedAt string
+	CreatedAt time.Time
 }
 
 // GroupMember represents a user who is currently a member of a Roblox group.
@@ -198,11 +198,11 @@ func (g *Group) GetJoinRequests() (requests []JoinRequest, err error) {
 		if err != nil {
 			continue
 		}
-
+		timestamp, _ := time.Parse(time.RFC3339, request.CreatedAt)
 		requests = append(requests, JoinRequest{
 			ID:        userID,
 			Username:  user.Username,
-			CreatedAt: request.CreatedAt,
+			CreatedAt: timestamp.UTC(),
 		})
 	}
 
