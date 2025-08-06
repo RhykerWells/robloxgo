@@ -486,7 +486,7 @@ func (g *Group) UpdateUserRole(userID string, roleID string) (*GroupRole, error)
 
 	path := fmt.Sprintf("%s/memberships/%s", g.ID.String(), user.ID.String())
 	requestBody := map[string]string{
-		"path": "groups" + path,
+		"path": "groups/" + path,
 		"user": "users/" + user.ID.String(),
 		"role": "groups/" + g.ID.String() + "/roles/" + role.ID.String(),
 	}
